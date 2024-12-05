@@ -821,6 +821,7 @@ def get_personal_data_base(name=None, surname=None, operator_id=None):
 
 
 
+
 # API prototype for the energy dashboard
 
 """
