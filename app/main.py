@@ -26,7 +26,7 @@ app = FastAPI()
 
 
 class AnomalyDataRequest(BaseModel):
-    timestamp: datetime
+    time: datetime
     isset_id: str
     name: str
     kpi: str
@@ -35,7 +35,6 @@ class AnomalyDataRequest(BaseModel):
     avg: float
     min: float
     max: float
-    var: float
     anomaly: str
 
 class UserRequest(BaseModel):
@@ -275,8 +274,6 @@ async def get_historical_data():
         return {"message": "An error occurred", "error": str(e)}
     
 
-
-
 # TODO, implement the query for the endpoint.
 # This endpoint should allow group 3 to post data inside the database. 
 # The data that should be stored is like this 
@@ -297,6 +294,7 @@ async def get_historical_data():
 # there is an extra field called anomaly, that can be ignored if we don't want to use that, but they can identify anomalies so it's 
 # included. Test the endponits before pushing so that we are sure group 3 can use them.
 
+
 @app.post("/store_datapoint")
 async def post_data_point(data: AnomalyDataRequest):
     try:
@@ -308,23 +306,19 @@ async def post_data_point(data: AnomalyDataRequest):
         ) as conn:
             with conn.cursor() as cursor:
                 print("parameters")
-                # Print to check if parameters are passed correctly.
-                print(data.timestamp, data.isset_id, data.name, data.kpi, data.operation,
-                      data.sum, data.avg, data.min, data.max, data.var, data.anomaly)
+                print(data.time, data.isset_id, data.name, data.kpi, data.operation,
+                      data.sum, data.avg, data.min, data.max, data.anomaly)
 
-                # TODO implement the real query.
-                
                 query = """
                     INSERT INTO real_time_data (
-                        timestamp, asset_id, name, kpi, operation, sum, avg, min, max, var, anomaly
+                        time, asset_id, name, kpi, operation, sum, avg, min, max, anomaly
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     RETURNING id;
                 """
-
-                cursor.execute(query, (data.timestamp, data.isset_id, data.name, data.kpi,
+                cursor.execute(query, (data.time, data.isset_id, data.name, data.kpi,
                                        data.operation, data.sum, data.avg, data.min,
-                                       data.max, data.var, data.anomaly))
+                                       data.max, data.anomaly))
 
                 logs = cursor.fetchall()
         return {"data": logs}
@@ -335,15 +329,15 @@ async def post_data_point(data: AnomalyDataRequest):
 
 # FILTERED GET HISTORICAL DATA
 @app.get("/filtered_historical_data")
-def filtered_get_historical_data(machine_name:str, asset_id:str, kpi:str, operation:str, timestamp_start:datetime, timestamp_end:datetime):
+def filtered_get_historical_data(name: str, asset_id: str, kpi: str, operation: str, timestamp_start: datetime, timestamp_end: datetime):
     try:
         with psycopg2.connect(
             host=DB_HOST,
             database=DB_NAME,
             user=DB_USER,
             password=DB_PASSWORD
-            
         ) as conn:
+
             with conn.cursor() as cursor:
                 print("Connessione al database riuscita.")
                 # AL POSTO DI real_time_data METTERE IL NOME DELLA TABELLA
@@ -353,9 +347,9 @@ def filtered_get_historical_data(machine_name:str, asset_id:str, kpi:str, operat
                 conditions = []
                 params = []
 
-                if machine_name:
+                if name:
                     conditions.append("name = %s")
-                    params.append(machine_name)
+                    params.append(name)
 
                 if asset_id:
                     conditions.append("asset_id = %s")
@@ -392,7 +386,8 @@ def filtered_get_historical_data(machine_name:str, asset_id:str, kpi:str, operat
     except Exception as e:
         print(f"Errore: {e}")
         return {"message": "An error occurred", "error": str(e)}
-    
+
+
 #hash strings, such as password
 def hash_string(in_string: str) -> str:
     hashed_string = hashlib.sha256(in_string.encode('utf-8')).hexdigest()
@@ -448,7 +443,8 @@ async def register_user(user: UserRequest):
     except Exception as e:
         print(f"An error occurred: {e}")
         return {"message": "An error occurred", "error": str(e)}
-    
+
+
 @app.post("/login")
 async def login(user: LoginRequest):
     try:
@@ -889,11 +885,12 @@ async def get_single_production(init_date, end_date,asset_id):
 // Machine Usage
 input: init_date, end_date
 // Energy
+
 const energy = {
     totalPower: "",
     totalConsumption: "",
     totalCost: "",
-    energyContributions: "",
+    energyContributions: "", // Cosa vuol dire?
     machines: [
         {
             machineId: "",
@@ -904,19 +901,22 @@ const energy = {
                 working: "",
                 idle: ""
             },
+
             efficiency: {
-                energyEfficiencyRatio: "",
-                energyConsumptionPerUnit: ""
+                energyEfficiencyRatio: "",  // Cosa vuol dire?
+                energyConsumptionPerUnit: ""  // Cosa vuol dire?
             },
-            sustainability: {
-                renewableEnergyUsagePercentage: "",
-                carbonFootPrint: ""
+
+            sustainability: { // Non ne teniamo conto
+                renewableEnergyUsagePercentage: "", // Cosa vuol dire?
+                carbonFootPrint: "" // Cosa vuol dire?
             }
         },
     ]
 }
 
 """
+
 
 @app.get("/energy")
 def get_energy(init_date, end_date):
@@ -928,61 +928,56 @@ def get_energy(init_date, end_date):
                 password=DB_PASSWORD
         ) as conn:
             with conn.cursor() as cursor:
-           
                 init_date = datetime.fromisoformat(init_date)
                 end_date = datetime.fromisoformat(end_date)
                 query = query = """
-                WITH EnergySummary AS (
-                    SELECT 
-                        SUM(power) AS totalPower,
-                        SUM(consumption) AS totalConsumption,
-                        SUM(cost) AS totalCost,
-                        SUM(renewable_energy) / NULLIF(SUM(consumption), 0) * 100 AS energyContributions
-                    FROM real_time_data
-                    WHERE timestamp BETWEEN %(start_time)s AND %(end_time)s
-                ),
-                MachineDetails AS (
-                    SELECT 
-                        machine_id AS machineId,
-                        machine_name AS machineName,
-                        machine_status AS machineStatus,
-                        SUM(consumption) AS totalConsumption,
-                        SUM(CASE WHEN machine_status = 'working' THEN consumption ELSE 0 END) AS workingConsumption,
-                        SUM(CASE WHEN machine_status = 'idle' THEN consumption ELSE 0 END) AS idleConsumption,
-                        AVG(energy_efficiency_ratio) AS energyEfficiencyRatio,
-                        AVG(energy_consumption_per_unit) AS energyConsumptionPerUnit,
-                        SUM(renewable_energy) / NULLIF(SUM(consumption), 0) * 100 AS renewableEnergyUsagePercentage,
-                        SUM(carbon_footprint) AS carbonFootPrint
-                    FROM real_time_data
-                    WHERE timestamp BETWEEN %(start_time)s AND %(end_time)s
-                    GROUP BY machine_id, machine_name, machine_status
-                )
-                SELECT 
-                    es.totalPower,
-                    es.totalConsumption,
-                    es.totalCost,
-                    es.energyContributions,
-                    json_agg(
-                        json_build_object(
-                            'machineId', md.machineId,
-                            'machineName', md.machineName,
-                            'machineStatus', md.machineStatus,
-                            'consumption', json_build_object(
-                                'total', md.totalConsumption,
-                                'working', md.workingConsumption,
-                                'idle', md.idleConsumption
-                            ),
-                            'efficiency', json_build_object(
-                                'energyEfficiencyRatio', md.energyEfficiencyRatio,
-                                'energyConsumptionPerUnit', md.energyConsumptionPerUnit
-                            ),
-                            'sustainability', json_build_object(
-                                'renewableEnergyUsagePercentage', md.renewableEnergyUsagePercentage,
-                                'carbonFootPrint', md.carbonFootPrint
-                            )
+                WITH aggregated_data AS (
+                SELECT
+                    rtd.asset_id,
+                    SUM(CASE WHEN rtd.kpi = 'power' THEN rtd.sum ELSE 0 END) AS total_power,
+                    SUM(CASE WHEN rtd.kpi = 'consumption' THEN rtd.sum ELSE 0 END) AS total_consumption,
+                    SUM(CASE WHEN rtd.kpi = 'cost' THEN rtd.sum ELSE 0 END) AS total_cost,
+                    SUM(CASE WHEN rtd.operation = 'working' THEN rtd.sum ELSE 0 END) AS working_consumption,
+                    SUM(CASE WHEN rtd.operation = 'idle' THEN rtd.sum ELSE 0 END) AS idle_consumption
+                FROM
+                    real_time_data rtd
+                WHERE
+                    rtd.time BETWEEN %s AND %s
+                GROUP BY
+                    rtd.asset_id
+            ),
+            machine_details AS (
+                SELECT
+                    m.asset_id,
+                    m.name AS machine_name,
+                    m.status AS machine_status
+                FROM
+                    machines m
+                WHERE
+                    m.status = 'active'
+            )
+            SELECT
+                COALESCE(SUM(ad.total_power), 0) AS total_power,
+                COALESCE(SUM(ad.total_consumption), 0) AS total_consumption,
+                COALESCE(SUM(ad.total_cost), 0) AS total_cost,
+                JSON_AGG(
+                    JSON_BUILD_OBJECT(
+                        'machineId', md.asset_id,
+                        'machineName', md.machine_name,
+                        'machineStatus', md.machine_status,
+                        'consumption', JSON_BUILD_OBJECT(
+                            'total', COALESCE(ad.total_consumption, 0),
+                            'working', COALESCE(ad.working_consumption, 0),
+                            'idle', COALESCE(ad.idle_consumption, 0)
                         )
-                    ) AS machines
-                FROM EnergySummary es, MachineDetails md;
+                    )
+                ) AS machines
+            FROM
+                machine_details md
+            LEFT JOIN
+                aggregated_data ad
+            ON
+                md.asset_id = ad.asset_id;
                 """
                 params = {
                     'start_time': init_date,
