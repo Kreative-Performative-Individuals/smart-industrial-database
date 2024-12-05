@@ -41,7 +41,7 @@ RUN echo "listen_addresses = '*'" >> /usr/share/postgresql/postgresql.conf.sampl
     && echo "shared_preload_libraries = 'timescaledb'" >> /usr/share/postgresql/postgresql.conf.sample
 
 # Create a virtual environment and install Python dependencies inside it
-RUN python3 -m venv /opt/venv && /opt/venv/bin/pip install psycopg2-binary fastapi uvicorn pandas python-dotenv
+RUN python3 -m venv /opt/venv && /opt/venv/bin/pip install psycopg2-binary fastapi uvicorn pandas python-dotenv pytest
 
 # Set the enviroment variable for the PostgreSQL data directory
 ENV POSTGRES_USER=postgres

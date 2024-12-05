@@ -642,244 +642,184 @@ def single_machine_detail(machine_id,init_date,end_date):
         print(f"An error occurred: {e}")
         return {"message": "An error occurred", "error": str(e)}
 
-'''
-input: init_date, end_date
-log_id: int
-start_time: str
-end_time: str
-responsible_operator_id: int
-operation_description: str
-result_summary: str
-asset_id: int
-'''
-@app.get("/production")
-async def get_production_logs(init_date, end_date):
+# Base endpoint for accessing database
+
+import pandas as pd
+
+@app.get("/get_aggregated_kpi")
+def get_aggregated_kpi(time_start: datetime, time_end: datetime):
+    """
+    Retrieves data from the `aggregated_kpi` table for a specified time range
+    and returns it in JSON format.
+
+    The time range is matched against rows with overlapping `begin_datetime` and `end_datetime`.
+
+    Args:
+        time_start (datetime): The start of the time range for the query.
+        time_end (datetime): The end of the time range for the query.
+
+    Returns:
+        str: A JSON-formatted string containing the filtered data.
+    """
+    # SQL query to retrieve data based on the time range
+    # The condition checks for any overlap between the input range and the row's datetime range
+    query = """
+        SELECT * 
+        FROM aggregated_kpi
+        WHERE begin_datetime <= %s AND end_datetime >= %s;
+    """
+    
     try:
+        # Establish a connection to the database
         with psycopg2.connect(
-                host=DB_HOST,
-                database=DB_NAME,
-                user=DB_USER,
-                password=DB_PASSWORD
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD
         ) as conn:
-            with conn.cursor() as cursor:
-                # Query to fetch production logs
-                query = """
-                    SELECT *
-                    FROM public.production_logs where start_time >= %s and end_time <= %s
-                """
-                cursor.execute(query,(init_date,end_date))
-                logs = cursor.fetchall()
-        return logs
-
+            # Execute the SQL query and read the result into a DataFrame
+            df = pd.read_sql_query(query, conn, params=(time_end, time_start))
+        
+        # Convert the DataFrame to JSON format with "records" orientation
+        return df.to_json(orient="records")
     except Exception as e:
-        print(f"An error occurred: {e}")
-        return {"message": "An error occurred", "error": str(e)}
+        # Handle any errors that occur during the process and return an error message in JSON format
+        print(f"Error while executing the query: {e}")
+        return '{"error": "An error occurred while executing the query"}'
 
-'''
-input: asset_id
-'''
-@app.get("/production_detail")
-async def get_production_detail(asset_id):
+@app.get("/get_machines")
+def get_machines(asset_id=None):
+    """
+    Retrieves machine information from the `machines` table.
+    If `asset_id` is provided, filters the table by `asset_id`.
+    Otherwise, returns the entire table.
+
+    Args:
+        asset_id (str, optional): The ID of the machine to filter by. Defaults to None.
+
+    Returns:
+        str: A JSON-formatted string containing the machine data.
+    """
+    # SQL query to retrieve all machines or filter by asset_id
+    query = """
+        SELECT * 
+        FROM machines
+        WHERE (%s IS NULL OR asset_id = %s);
+    """
+    
     try:
+        # Establish a connection to the database
         with psycopg2.connect(
-                host=DB_HOST,
-                database=DB_NAME,
-                user=DB_USER,
-                password=DB_PASSWORD
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD
         ) as conn:
-            with conn.cursor() as cursor:
-                # Query to fetch production logs
-                query = """
-                    SELECT *
-                    FROM public.production_logs where asset_id = %s
-                """
-                cursor.execute(query, (asset_id,))
-                logs = cursor.fetchall()
-        return logs
-
+            # Execute the query and read the result into a DataFrame
+            df = pd.read_sql_query(query, conn, params=(asset_id, asset_id))
+        
+        # Convert the DataFrame to JSON format with "records" orientation
+        return df.to_json(orient="records")
     except Exception as e:
-        print(f"An error occurred: {e}")
-        return {"message": "An error occurred", "error": str(e)}
+        # Handle any errors that occur during the process and return an error message in JSON format
+        print(f"Error while executing the query: {e}")
+        return '{"error": "An error occurred while executing the query"}'
 
+@app.get("/get_maintenance_records")
+def get_maintenance_records(time_start: datetime, time_end: datetime):
+    """
+    Retrieves maintenance records from the `maintenance_records` table
+    for records that overlap with the specified time range.
 
-'''// Production
-input: init_date, end_date
-const production = {
-    totalPower: "",
-    totalConsumption: "",
-    totalCost: "",
-    energyContributions: "",
-    machines: [
-        {
-            machineId: "",
-            machineName: "",
-            machineStatus: "",
-            averageCycleTime: "",
-            cycleCount: "",
-            badCycles: "",
-            goodCycles: "",
-            efficiency: "",
-            density: "",
-            failureRate: "",
-            successRate: "",
-        },
-    ]
-}'''
+    Args:
+        time_start (datetime): Start of the time range.
+        time_end (datetime): End of the time range.
 
-@app.get("/production_dashboard")
-async def get_production_dashboard(init_date, end_date):
+    Returns:
+        str: A JSON-formatted string containing the maintenance records.
+    """
+    # SQL query to retrieve records where the time ranges overlap
+    query = """
+        SELECT * 
+        FROM maintenance_records
+        WHERE start_time <= %s AND end_time >= %s;
+    """
+    
     try:
+        # Establish a connection to the database
         with psycopg2.connect(
-                host=DB_HOST,
-                database=DB_NAME,
-                user=DB_USER,
-                password=DB_PASSWORD
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD
         ) as conn:
-            with conn.cursor() as cursor:
-                # Query to fetch production logs
-                query = """
-                    Select sum from real_time_data where time >= %s and time <= %s and kpi = %s 
-                """
-                cursor.execute(query,(init_date,end_date,"consumption"))
-
-                logs = cursor.fetchall()
-                consumption_sum = 0
-                for log in logs:
-                    consumption_sum += log[0]
-                
-                query = """
-                    Select sum from real_time_data where time >= %s and time <= %s and kpi = %s
-                """
-                cursor.execute(query,(init_date,end_date,"cost"))
-
-                logs = cursor.fetchall()
-                cost_sum = 0
-                for log in logs:
-                    cost_sum += log[0]
-
-                query = """
-                    Select sum from real_time_data where time >= %s and time <= %s and kpi = %s
-                """
-                cursor.execute(query,(init_date,end_date,"power"))
-
-                logs = cursor.fetchall()
-                total_power = 0
-                for log in logs:
-                    total_power += log[0]
-
-
-                query = """
-                        select * from real_time_data where time >= %s and time <= %s 
-                """
-                cursor.execute(query,(init_date,end_date))
-                logs = cursor.fetchall()
-                energy_Contribution = 0
-                running = 0
-                idle = 0
-                for log in logs:
-                    if log[-1].lower() == "running":
-                        running+=1
-                    else:
-                        idle+=1
-                if (idle > 0 ) and (running > 0):
-                    energy_Contribution = (running/(idle+running)) * 100
-
-                
-                query = """
-                    select m.*
-                    FROM public.machines as m inner join public.real_time_data as r on m.asset_id = r.asset_id where r.time >= %s and r.time <= %s
-                """
-                cursor.execute(query,(init_date,end_date))
-
-                total_machines = cursor.fetchall()
-            
-                consumption_sum = 0 if math.isnan(consumption_sum) else consumption_sum
-                cost_sum = 0 if math.isnan(cost_sum) else cost_sum
-                total_power = 0 if math.isnan(total_power) else total_power
-
-
-                returnValue = Production(totalConsumption=consumption_sum,totalCost=cost_sum,energyContributions=energy_Contribution,machines=total_machines,totalPower=total_power)
-                
-        return {"data":returnValue}
-
+            # Execute the query and read the result into a DataFrame
+            df = pd.read_sql_query(query, conn, params=(time_end, time_start))
+        
+        # Convert the DataFrame to JSON format with "records" orientation
+        return df.to_json(orient="records")
     except Exception as e:
-        print(f"An error occurred: {e}")
-        return {"message": "An error occurred", "error": str(e)}
+        # Handle any errors that occur during the process and return an error message in JSON format
+        print(f"Error while executing the query: {e}")
+        return '{"error": "An error occurred while executing the query"}'
 
-'''// Single Production Detail
-input: init_date, end_date, asset_id
-const singleProduction = {
-    machineId: "",
-    machineName: "",
-    machineStatus: "",
-    dataRange: "",
-    totalCycles: "",
-    goodCycles: "",
-    badCycles: "",
-    averageCycleTime: "",
-}
-'''
-@app.get("/single_production")
-async def get_single_production(init_date, end_date,asset_id):
+@app.get("/get_personal_data")
+def get_personal_data(name=None, surname=None, operator_id=None):
+    """
+    Retrieves personal data based on the given parameters from the `personal_data` table.
+    
+    Args:
+        name (str, optional): First name of the person.
+        surname (str, optional): Surname of the person.
+        operator_id (int, optional): Unique identifier for the operator.
+    
+    Returns:
+        str: JSON-formatted string containing the results.
+    """
+    # Base query
+    query = "SELECT * FROM personal_data"
+    conditions = []
+    params = []
+
+    # Determine conditions based on input parameters
+    if operator_id:
+        conditions.append("operator_id = %s")
+        params.append(operator_id)
+    elif name and surname:
+        conditions.append("name = %s AND surname = %s")
+        params.extend([name, surname])
+    elif name:
+        conditions.append("name = %s")
+        params.append(name)
+    elif surname:
+        conditions.append("surname = %s")
+        params.append(surname)
+
+    # Add conditions to query if any
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+
     try:
+        # Establish database connection
         with psycopg2.connect(
-                host=DB_HOST,
-                database=DB_NAME,
-                user=DB_USER,
-                password=DB_PASSWORD
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD
         ) as conn:
-            with conn.cursor() as cursor:
-                # Query to fetch production logs
-                query = """
-                    Select sum from real_time_data where time >= %s and time <= %s and kpi = %s and asset_id = %s
-                """
-                cursor.execute(query,(init_date,end_date,"goodCycles",asset_id))
-
-                logs = cursor.fetchall()
-                good_cycles = 0
-                for log in logs:
-                    good_cycles += log[0]
-                
-                query = """
-                    Select sum from real_time_data where time >= %s and time <= %s and kpi = %s and asset_id = %s
-                """
-                cursor.execute(query,(init_date,end_date,"badCycles",asset_id))
-
-                logs = cursor.fetchall()
-                bad_cycles = 0
-                for log in logs:
-                    bad_cycles += log[0]
-
-                query = """
-                    Select avg from real_time_data where time >= %s and time <= %s and kpi = %s and asset_id = %s
-                """
-                cursor.execute(query,(init_date,end_date,"CycleTime",asset_id))
-
-                logs = cursor.fetchall()
-                average_cycle_time = 0
-                for log in logs:
-                    average_cycle_time += log[0]
-                query = """
-                    select * from machines where machine_id = %s
-                    """
-                cursor.execute(query,(asset_id,))
-            
-                logs = cursor.fetchall()
-                machine = logs[0]
-
-            returnValue = SingleProduction(machine_id=asset_id,machine_name=machine[1],machine_status=machine[6],
-                                           data_range=[init_date,end_date],total_cycles=good_cycles+bad_cycles,good_cycles=good_cycles,average_cycle_time=average_cycle_time)
-                
-        return {"data":returnValue}
-
+            # Execute query and load results into DataFrame
+            df = pd.read_sql_query(query, conn, params=params)
+        
+        # Return results as JSON
+        return df.to_json(orient="records")
     except Exception as e:
-        print(f"An error occurred: {e}")
-        return {"message": "An error occurred", "error": str(e)}
+        # Handle any errors during execution
+        print(f"Error while executing the query: {e}")
+        return '{"error": "An error occurred while retrieving personal data"}'
 
 
 
-
-
+# API prototype for the energy dashboard
 
 """
 // Machine Usage
@@ -890,7 +830,7 @@ const energy = {
     totalPower: "",
     totalConsumption: "",
     totalCost: "",
-    energyContributions: "", // Cosa vuol dire?
+    energy Contributions: "", // Cosa vuol dire?
     machines: [
         {
             machineId: "",
@@ -1014,23 +954,13 @@ const singleEnergy = {
     totalPower: "",
     totalConsumption: "",
     totalCost: "",
-    energyContributions: "",
-    workingConsumption: "",
+    energyContributions: "", // Cosa vuol dire?
+    workingConsumption: "", 
     idleConsumption: "",
-    energyEfficiencyRatio: "",
-    energyConsumptionPerUnit: "",
-    renewableEnergyUsagePercentage: "",
-    carbonFootprint: "",
-    chartType: "",
-    Chart: [
-        {
-            date: "",
-            totalConsumption: "",
-            workingConsumption: "",
-            idleConsumption: ""
-        },
-    ]
-}
+    energyEfficiencyRatio: "", // Cosa vuol dire?
+    energyConsumptionPerUnit: "", // Cosa vuol dire?
+    renewableEnergyUsagePercentage: "", // Cosa vuol dire?
+    carbonFootprint: "", // Cosa vuol dire?
 """
 
 @app.get("/single_energy_detail")
@@ -1145,11 +1075,11 @@ const Financial = {
     dataRange: "",
     grossMargin: "",
     roi: "",
-    revenuePerEmployee: "",
-    salesGrowthRate: "",
+    revenuePerEmployee: "", // Finto fisso
+    salesGrowthRate: "", 
     totalOperationalCost: "",
     costPerUnit: "",
-    costPerCycle: "",
+    costPerCycle: "", 
     totalEnergyCost: "",
     chartType: "",
     Chart: [
