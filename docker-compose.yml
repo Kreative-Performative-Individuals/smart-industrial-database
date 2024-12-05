@@ -21,7 +21,7 @@ services:
       PGADMIN_DEFAULT_EMAIL: admin@admin.com
       PGADMIN_DEFAULT_PASSWORD: password
     ports:
-      - "5051:80"  # Porta per accedere a pgAdmin
+      - "5051:80"  # port used to access pgadmin
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     depends_on:
