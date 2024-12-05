@@ -55,6 +55,32 @@ class DashboardObj(BaseModel):
     totalAlarm: float
     costAnalysis: float
 
+class SingleMachineDetail(BaseModel):
+    machineId: str
+    machineName: str
+    machineStatus: str
+    dataRange: list[datetime]
+    totalPower: float
+    totalConsumption: float
+    totalCost: float
+
+class Production(BaseModel):
+    totalPower: float
+    totalConsumption: float
+    totalCost: float
+    energyContributions: float
+    machines: list
+
+class SingleProduction(BaseModel):
+    machine_id: str
+    machine_name: str
+    machine_status: str
+    data_range: list[datetime]
+    total_cycles: int
+    good_cycles: int
+    bad_cycles: int
+    average_cycle_time: float
+
 
 @app.get("/machines", summary="Fetch machine records",
          description="This endpoint retrieves all records from the machines table in the database, displaying details about each machine.")
@@ -469,7 +495,6 @@ const dashboard = {
     }
 }
 '''
-#dashboard = DashboardObj()
 @app.get("/get_machines")
 async def get_machines(init_date, end_date):
     try:
@@ -481,9 +506,6 @@ async def get_machines(init_date, end_date):
         ) as conn:
             with conn.cursor() as cursor:
                 timestamp = datetime.strptime(init_date, "%Y-%m-%d %H:%M:%S")
-
-                init_date = datetime.fromisoformat(init_date)
-                end_date = datetime.fromisoformat(end_date)
                 # Print to check if parameters are passed correctly.
                 # TODO implement the real query.
                 
@@ -523,7 +545,10 @@ async def get_machines(init_date, end_date):
                 consumption_sum = 0 if math.isnan(consumption_sum) else consumption_sum
                 cost_sum = 0 if math.isnan(cost_sum) else cost_sum
 
-        return {"data":{"totalMachines":total_machines,"totalConsumptionPerDay":consumption_sum,"totalCostPerDay":cost_sum,"totalAlarm":random.randint(0,3)}}
+                dashboard = DashboardObj(total_machines=total_machines,totalConsumptionPerDay=consumption_sum,totalCostPerDay=cost_sum,totalAlarm=random.randint(0,3),costAnalysis={}
+                                         )
+
+        return {"data":dashboard}
     except Exception as e:
         print(f"An error occurred: {e}")
         return {"message": "An error occurred", "error": str(e)}
@@ -563,8 +588,6 @@ def single_machine_detail(machine_id,init_date,end_date):
                 cursor.execute(query, (machine_id,))
                 logs = cursor.fetchall()
                 machineName = logs[0][0]
-                init_date = datetime.fromisoformat(init_date)
-                end_date = datetime.fromisoformat(end_date)
                 query = """
                     Select operations from real_time_data where asset_id = %s and time >= %s and time <= %s
                 """
@@ -607,22 +630,259 @@ def single_machine_detail(machine_id,init_date,end_date):
                 cost_sum = 0 if math.isnan(cost_sum) else cost_sum
                 total_power = 0 if math.isnan(total_power) else total_power
                 # Construct and return the final response object
-                single_machine_detail = {
-                    "machineId": machine_id,
-                    "machineName": machineName,
-                    "machineStatus": machineStatus,
-                    "dataRange": datarange,
-                    "totalPower": total_power,
-                    "totalConsumption": consumption_sum,
-                    "totalCost": cost_sum
-                }
+                single_machine_detail = SingleMachineDetail(
+                    machineId=machine_id,
+                    machineName=machineName,
+                    machineStatus=machineStatus,
+                    dataRange=datarange,
+                    totalPower=total_power,
+                    totalConsumption=consumption_sum,
+                    totalCost=cost_sum
+                )
 
-                print(single_machine_detail)
             return {"data":single_machine_detail}
 
     except Exception as e:
         print(f"An error occurred: {e}")
         return {"message": "An error occurred", "error": str(e)}
+
+'''
+input: init_date, end_date
+log_id: int
+start_time: str
+end_time: str
+responsible_operator_id: int
+operation_description: str
+result_summary: str
+asset_id: int
+'''
+@app.get("/production")
+async def get_production_logs(init_date, end_date):
+    try:
+        with psycopg2.connect(
+                host=DB_HOST,
+                database=DB_NAME,
+                user=DB_USER,
+                password=DB_PASSWORD
+        ) as conn:
+            with conn.cursor() as cursor:
+                # Query to fetch production logs
+                query = """
+                    SELECT *
+                    FROM public.production_logs where start_time >= %s and end_time <= %s
+                """
+                cursor.execute(query,(init_date,end_date))
+                logs = cursor.fetchall()
+        return logs
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return {"message": "An error occurred", "error": str(e)}
+
+'''
+input: asset_id
+'''
+@app.get("/production_detail")
+async def get_production_detail(asset_id):
+    try:
+        with psycopg2.connect(
+                host=DB_HOST,
+                database=DB_NAME,
+                user=DB_USER,
+                password=DB_PASSWORD
+        ) as conn:
+            with conn.cursor() as cursor:
+                # Query to fetch production logs
+                query = """
+                    SELECT *
+                    FROM public.production_logs where asset_id = %s
+                """
+                cursor.execute(query, (asset_id,))
+                logs = cursor.fetchall()
+        return logs
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return {"message": "An error occurred", "error": str(e)}
+
+
+'''// Production
+input: init_date, end_date
+const production = {
+    totalPower: "",
+    totalConsumption: "",
+    totalCost: "",
+    energyContributions: "",
+    machines: [
+        {
+            machineId: "",
+            machineName: "",
+            machineStatus: "",
+            averageCycleTime: "",
+            cycleCount: "",
+            badCycles: "",
+            goodCycles: "",
+            efficiency: "",
+            density: "",
+            failureRate: "",
+            successRate: "",
+        },
+    ]
+}'''
+
+@app.get("/production_dashboard")
+async def get_production_dashboard(init_date, end_date):
+    try:
+        with psycopg2.connect(
+                host=DB_HOST,
+                database=DB_NAME,
+                user=DB_USER,
+                password=DB_PASSWORD
+        ) as conn:
+            with conn.cursor() as cursor:
+                # Query to fetch production logs
+                query = """
+                    Select sum from real_time_data where time >= %s and time <= %s and kpi = %s 
+                """
+                cursor.execute(query,(init_date,end_date,"consumption"))
+
+                logs = cursor.fetchall()
+                consumption_sum = 0
+                for log in logs:
+                    consumption_sum += log[0]
+                
+                query = """
+                    Select sum from real_time_data where time >= %s and time <= %s and kpi = %s
+                """
+                cursor.execute(query,(init_date,end_date,"cost"))
+
+                logs = cursor.fetchall()
+                cost_sum = 0
+                for log in logs:
+                    cost_sum += log[0]
+
+                query = """
+                    Select sum from real_time_data where time >= %s and time <= %s and kpi = %s
+                """
+                cursor.execute(query,(init_date,end_date,"power"))
+
+                logs = cursor.fetchall()
+                total_power = 0
+                for log in logs:
+                    total_power += log[0]
+
+
+                query = """
+                        select * from real_time_data where time >= %s and time <= %s 
+                """
+                cursor.execute(query,(init_date,end_date))
+                logs = cursor.fetchall()
+                energy_Contribution = 0
+                running = 0
+                idle = 0
+                for log in logs:
+                    if log[-1].lower() == "running":
+                        running+=1
+                    else:
+                        idle+=1
+                if (idle > 0 ) and (running > 0):
+                    energy_Contribution = (running/(idle+running)) * 100
+
+                
+                query = """
+                    select m.*
+                    FROM public.machines as m inner join public.real_time_data as r on m.asset_id = r.asset_id where r.time >= %s and r.time <= %s
+                """
+                cursor.execute(query,(init_date,end_date))
+
+                total_machines = cursor.fetchall()
+            
+                consumption_sum = 0 if math.isnan(consumption_sum) else consumption_sum
+                cost_sum = 0 if math.isnan(cost_sum) else cost_sum
+                total_power = 0 if math.isnan(total_power) else total_power
+
+
+                returnValue = Production(totalConsumption=consumption_sum,totalCost=cost_sum,energyContributions=energy_Contribution,machines=total_machines,totalPower=total_power)
+                
+        return {"data":returnValue}
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return {"message": "An error occurred", "error": str(e)}
+
+'''// Single Production Detail
+input: init_date, end_date, asset_id
+const singleProduction = {
+    machineId: "",
+    machineName: "",
+    machineStatus: "",
+    dataRange: "",
+    totalCycles: "",
+    goodCycles: "",
+    badCycles: "",
+    averageCycleTime: "",
+}
+'''
+@app.get("/single_production")
+async def get_single_production(init_date, end_date,asset_id):
+    try:
+        with psycopg2.connect(
+                host=DB_HOST,
+                database=DB_NAME,
+                user=DB_USER,
+                password=DB_PASSWORD
+        ) as conn:
+            with conn.cursor() as cursor:
+                # Query to fetch production logs
+                query = """
+                    Select sum from real_time_data where time >= %s and time <= %s and kpi = %s and asset_id = %s
+                """
+                cursor.execute(query,(init_date,end_date,"goodCycles",asset_id))
+
+                logs = cursor.fetchall()
+                good_cycles = 0
+                for log in logs:
+                    good_cycles += log[0]
+                
+                query = """
+                    Select sum from real_time_data where time >= %s and time <= %s and kpi = %s and asset_id = %s
+                """
+                cursor.execute(query,(init_date,end_date,"badCycles",asset_id))
+
+                logs = cursor.fetchall()
+                bad_cycles = 0
+                for log in logs:
+                    bad_cycles += log[0]
+
+                query = """
+                    Select avg from real_time_data where time >= %s and time <= %s and kpi = %s and asset_id = %s
+                """
+                cursor.execute(query,(init_date,end_date,"CycleTime",asset_id))
+
+                logs = cursor.fetchall()
+                average_cycle_time = 0
+                for log in logs:
+                    average_cycle_time += log[0]
+                query = """
+                    select * from machines where machine_id = %s
+                    """
+                cursor.execute(query,(asset_id,))
+            
+                logs = cursor.fetchall()
+                machine = logs[0]
+
+            returnValue = SingleProduction(machine_id=asset_id,machine_name=machine[1],machine_status=machine[6],
+                                           data_range=[init_date,end_date],total_cycles=good_cycles+bad_cycles,good_cycles=good_cycles,average_cycle_time=average_cycle_time)
+                
+        return {"data":returnValue}
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return {"message": "An error occurred", "error": str(e)}
+
+
+
+
 
 
 """
