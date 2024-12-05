@@ -819,8 +819,125 @@ def get_personal_data_base(name=None, surname=None, operator_id=None):
         print(f"Error while executing the query: {e}")
         return '{"error": "An error occurred while retrieving personal data"}'
 
+from typing import Optional
+
+@app.get("/get_production_logs_base")
+def get_production_logs_base(start_time: Optional[datetime] = None, 
+                        end_time: Optional[datetime] = None, 
+                        asset_id: Optional[str] = None):
+    """
+    Retrieve records from the `production_logs` table based on optional filters.
+    
+    Args:
+        start_time (Optional[datetime]): The start of the datetime range.
+        end_time (Optional[datetime]): The end of the datetime range.
+        asset_id (Optional[str]): The identifier for the asset.
+
+    Returns:
+        list: A list of dictionaries containing the retrieved records.
+    """
+    try:
+        # Connect to the database
+        with psycopg2.connect(
+            host="DB_HOST",
+            database="DB_NAME",
+            user="DB_USER",
+            password="DB_PASSWORD"
+        ) as conn:
+            with conn.cursor() as cursor:
+                # Base query
+                query = "SELECT * FROM production_logs"
+                conditions = []
+                params = []
+
+                # Add conditions based on provided arguments
+                if start_time and end_time:
+                    conditions.append("start_time >= %s AND end_time <= %s")
+                    params.extend([start_time, end_time])
+                if asset_id:
+                    conditions.append("asset_id = %s")
+                    params.append(asset_id)
+
+                # Append WHERE clause if there are conditions
+                if conditions:
+                    query += " WHERE " + " AND ".join(conditions)
+
+                # Execute the query
+                cursor.execute(query, params)
+                rows = cursor.fetchall()
+
+                # Get column names from the cursor description
+                col_names = [desc[0] for desc in cursor.description]
+
+                # Convert rows to a list of dictionaries
+                result = [dict(zip(col_names, row)) for row in rows]
+                
+                return result
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return {"message": "An error occurred", "error": str(e)}
 
 
+@app.get("/get_real_time_data_base")
+def get_real_time_data(start_time: Optional[datetime] = None, 
+                       end_time: Optional[datetime] = None, 
+                       kpi: Optional[str] = None,
+                       asset_id: Optional[str] = None):
+    """
+    Retrieve records from the `real_time_data` table based on optional filters.
+    
+    Args:
+        start_time (Optional[datetime]): The start of the datetime range.
+        end_time (Optional[datetime]): The end of the datetime range.
+        kpi (Optional[str]): The KPI value to filter on (e.g., "power", "consumption").
+        asset_id (Optional[str]): The identifier for the asset.
+
+    Returns:
+        list: A list of dictionaries containing the retrieved records.
+    """
+    try:
+        # Connect to the database
+        with psycopg2.connect(
+            host="DB_HOST",
+            database="DB_NAME",
+            user="DB_USER",
+            password="DB_PASSWORD"
+        ) as conn:
+            with conn.cursor() as cursor:
+                # Base query
+                query = "SELECT * FROM real_time_data"
+                conditions = []
+                params = []
+
+                # Add conditions based on provided arguments
+                if start_time and end_time:
+                    conditions.append("start_time >= %s AND end_time <= %s")
+                    params.extend([start_time, end_time])
+                if kpi:
+                    conditions.append("kpi = %s")
+                    params.append(kpi)
+                if asset_id:
+                    conditions.append("asset_id = %s")
+                    params.append(asset_id)
+
+                # Append WHERE clause if there are conditions
+                if conditions:
+                    query += " WHERE " + " AND ".join(conditions)
+
+                # Execute the query
+                cursor.execute(query, params)
+                rows = cursor.fetchall()
+
+                # Get column names from the cursor description
+                col_names = [desc[0] for desc in cursor.description]
+
+                # Convert rows to a list of dictionaries
+                result = [dict(zip(col_names, row)) for row in rows]
+                
+                return result
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return {"message": "An error occurred", "error": str(e)}
 
 # API prototype for the energy dashboard
 
