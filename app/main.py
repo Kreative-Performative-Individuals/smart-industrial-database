@@ -879,7 +879,7 @@ def get_production_logs_base(start_time: Optional[datetime] = None,
 
 
 @app.get("/get_real_time_data_base")
-def get_real_time_data(start_time: Optional[datetime] = None, 
+def get_real_time_data_base(start_time: Optional[datetime] = None, 
                        end_time: Optional[datetime] = None, 
                        kpi: Optional[str] = None,
                        asset_id: Optional[str] = None):
