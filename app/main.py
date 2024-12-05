@@ -911,7 +911,7 @@ def get_real_time_data_base(start_time: Optional[datetime] = None,
 
                 # Add conditions based on provided arguments
                 if start_time and end_time:
-                    conditions.append("start_time >= %s AND end_time <= %s")
+                    conditions.append("time >= %s AND time <= %s")
                     params.extend([start_time, end_time])
                 if kpi:
                     conditions.append("kpi = %s")
