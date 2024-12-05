@@ -839,10 +839,10 @@ def get_production_logs_base(start_time: Optional[datetime] = None,
     try:
         # Connect to the database
         with psycopg2.connect(
-            host="DB_HOST",
-            database="DB_NAME",
-            user="DB_USER",
-            password="DB_PASSWORD"
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD
         ) as conn:
             with conn.cursor() as cursor:
                 # Base query
@@ -898,10 +898,10 @@ def get_real_time_data(start_time: Optional[datetime] = None,
     try:
         # Connect to the database
         with psycopg2.connect(
-            host="DB_HOST",
-            database="DB_NAME",
-            user="DB_USER",
-            password="DB_PASSWORD"
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD
         ) as conn:
             with conn.cursor() as cursor:
                 # Base query
