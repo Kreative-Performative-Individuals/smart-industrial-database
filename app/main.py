@@ -647,7 +647,7 @@ def single_machine_detail(machine_id,init_date,end_date):
 import pandas as pd
 
 @app.get("/get_aggregated_kpi_base")
-def get_aggregated_kpi_base(time_start: datetime, time_end: datetime):
+def get_aggregated_kpi_base(time_start=None, time_end=None):
     """
     Retrieves data from the `aggregated_kpi` table for a specified time range
     and returns it in JSON format.
@@ -666,7 +666,7 @@ def get_aggregated_kpi_base(time_start: datetime, time_end: datetime):
     query = """
         SELECT * 
         FROM aggregated_kpi
-        WHERE begin_datetime <= %s AND end_datetime >= %s;
+        WHERE (%s IS NULL AND %s IS NULL) OR (begin_datetime <= %s AND end_datetime >= %s);
     """
     
     try:
