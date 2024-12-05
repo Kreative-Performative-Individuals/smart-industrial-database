@@ -1,11 +1,14 @@
 import pytest
 import psycopg2
+from dotenv import load_dotenv
+import os
 
-# Connection parameters for the database
-DB_HOST = "172.17.0.2"
-DB_NAME = "KPI_database"
-DB_USER = "postgres"
-DB_PASSWORD = "password"
+load_dotenv()
+
+DB_HOST = os.getenv("DB_HOST")
+DB_NAME = os.getenv("DB_NAME")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 
 # Test: connection to the database
