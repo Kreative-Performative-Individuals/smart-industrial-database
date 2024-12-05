@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  kpi-database:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kpi-database
+    ports:
+      - "8002:8002"  # used to access fastAPI
+      - "5432:5432"  # used to access postgres
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: password
+    ports:
+      - "5051:80"  # Porta per accedere a pgAdmin
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - kpi-database
+    networks:
+      - app-network
+volumes:
+  pg_data:
+  pgadmin_data:
+
+networks:
+  app-network:
