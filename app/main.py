@@ -646,7 +646,7 @@ def single_machine_detail(machine_id,init_date,end_date):
 
 import pandas as pd
 
-@app.get("/get_aggregated_kpi")
+@app.get("/get_aggregated_kpi_base")
 def get_aggregated_kpi(time_start: datetime, time_end: datetime):
     """
     Retrieves data from the `aggregated_kpi` table for a specified time range
@@ -687,7 +687,8 @@ def get_aggregated_kpi(time_start: datetime, time_end: datetime):
         print(f"Error while executing the query: {e}")
         return '{"error": "An error occurred while executing the query"}'
 
-@app.get("/get_machines")
+
+@app.get("/get_machines_base")
 def get_machines(asset_id=None):
     """
     Retrieves machine information from the `machines` table.
@@ -725,7 +726,8 @@ def get_machines(asset_id=None):
         print(f"Error while executing the query: {e}")
         return '{"error": "An error occurred while executing the query"}'
 
-@app.get("/get_maintenance_records")
+
+@app.get("/get_maintenance_records_base")
 def get_maintenance_records(time_start: datetime, time_end: datetime):
     """
     Retrieves maintenance records from the `maintenance_records` table
@@ -763,7 +765,7 @@ def get_maintenance_records(time_start: datetime, time_end: datetime):
         print(f"Error while executing the query: {e}")
         return '{"error": "An error occurred while executing the query"}'
 
-@app.get("/get_personal_data")
+@app.get("/get_personal_data_base")
 def get_personal_data(name=None, surname=None, operator_id=None):
     """
     Retrieves personal data based on the given parameters from the `personal_data` table.
