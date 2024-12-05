@@ -8,6 +8,7 @@
     - [Prerequisites](#prerequisites)
     - [Setting Up the Database](#setting-up-the-database)
   - [🧪 Testing the Database](#-testing-the-database)
+  - [This will run the tests we wrote and show you the results.](#this-will-run-the-tests-we-wrote-and-show-you-the-results)
   - [Try our API](#try-our-api)
   - [Understanding the Architecture and E-R Schema of the Database](#understanding-the-architecture-and-e-r-schema-of-the-database)
   - [🔐 DevSecOps](#-devsecops)
@@ -164,36 +165,33 @@ Replace `<container_id_or_name>` with the ID or name of the Docker container run
 ## 🧪 Testing the Database
 
 If you want to test the database, all you need to do is run the following command:
-
-```bash
-pytest test_database.py
+1. go inside the container by running the following command:
+```bash 
+docker exec -it kpi-database bash
 ```
-
-If you want more details about the tests, you can run the following command:
-
+2. place yourself inside the `/app` directory by running the following command:
 ```bash
+cd /app
+```
+3. run the following command to test the database:
+```bash
+source /opt/venv/bin/activate \
 pytest test_database.py -v
 ```
-
-More details about `pytest` can be found by running the following command:
-
-```bash
-pytest --help
-```
-
+This will run the tests we wrote and show you the results.
 ---
 
 ## Try our API
 
 We implemented our endpoints using FastAPI.
 
-After you have started the container and filled the database by using `build_db.sh`, you can try our endpoints by visiting **http://localhost:8002/docs**.
+After you have started the container and filled the database by using `build_db.sh`, you can try our endpoints by visiting `http://localhost:8002/docs`.
 
 There you can find the instructions and the description of the endpoints and try them using the GUI provided by `FastAPI`.
 
 ## Understanding the Architecture and E-R Schema of the Database
 
-The following architecture Diagram shows the overall design of the Industry 5.0 data architecture, including real-time data flows and processing pipelines.
+The following architecture Diagram shows the overall design of the `Industry 5.0` data architecture, including real-time data flows and processing pipelines.
 
 ![architecture_diagram](images/architecture_diagram.png)
 
