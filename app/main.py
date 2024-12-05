@@ -647,7 +647,7 @@ def single_machine_detail(machine_id,init_date,end_date):
 import pandas as pd
 
 @app.get("/get_aggregated_kpi_base")
-def get_aggregated_kpi(time_start: datetime, time_end: datetime):
+def get_aggregated_kpi_base(time_start: datetime, time_end: datetime):
     """
     Retrieves data from the `aggregated_kpi` table for a specified time range
     and returns it in JSON format.
@@ -689,7 +689,7 @@ def get_aggregated_kpi(time_start: datetime, time_end: datetime):
 
 
 @app.get("/get_machines_base")
-def get_machines(asset_id=None):
+def get_machines_base(asset_id=None):
     """
     Retrieves machine information from the `machines` table.
     If `asset_id` is provided, filters the table by `asset_id`.
@@ -728,7 +728,7 @@ def get_machines(asset_id=None):
 
 
 @app.get("/get_maintenance_records_base")
-def get_maintenance_records(time_start: datetime, time_end: datetime):
+def get_maintenance_records_base(time_start: datetime, time_end: datetime):
     """
     Retrieves maintenance records from the `maintenance_records` table
     for records that overlap with the specified time range.
@@ -766,7 +766,7 @@ def get_maintenance_records(time_start: datetime, time_end: datetime):
         return '{"error": "An error occurred while executing the query"}'
 
 @app.get("/get_personal_data_base")
-def get_personal_data(name=None, surname=None, operator_id=None):
+def get_personal_data_base(name=None, surname=None, operator_id=None):
     """
     Retrieves personal data based on the given parameters from the `personal_data` table.
     
