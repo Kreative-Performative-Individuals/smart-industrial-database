@@ -642,6 +642,186 @@ def single_machine_detail(machine_id,init_date,end_date):
         print(f"An error occurred: {e}")
         return {"message": "An error occurred", "error": str(e)}
 
+<<<<<<< HEAD
+# Base endpoint for accessing database
+
+import pandas as pd
+
+@app.get("/get_aggregated_kpi")
+def get_aggregated_kpi(time_start: datetime, time_end: datetime):
+    """
+    Retrieves data from the `aggregated_kpi` table for a specified time range
+    and returns it in JSON format.
+
+    The time range is matched against rows with overlapping `begin_datetime` and `end_datetime`.
+
+    Args:
+        time_start (datetime): The start of the time range for the query.
+        time_end (datetime): The end of the time range for the query.
+
+    Returns:
+        str: A JSON-formatted string containing the filtered data.
+    """
+    # SQL query to retrieve data based on the time range
+    # The condition checks for any overlap between the input range and the row's datetime range
+    query = """
+        SELECT * 
+        FROM aggregated_kpi
+        WHERE begin_datetime <= %s AND end_datetime >= %s;
+    """
+    
+    try:
+        # Establish a connection to the database
+        with psycopg2.connect(
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD
+        ) as conn:
+            # Execute the SQL query and read the result into a DataFrame
+            df = pd.read_sql_query(query, conn, params=(time_end, time_start))
+        
+        # Convert the DataFrame to JSON format with "records" orientation
+        return df.to_json(orient="records")
+    except Exception as e:
+        # Handle any errors that occur during the process and return an error message in JSON format
+        print(f"Error while executing the query: {e}")
+        return '{"error": "An error occurred while executing the query"}'
+
+@app.get("/get_machines")
+def get_machines(asset_id=None):
+    """
+    Retrieves machine information from the `machines` table.
+    If `asset_id` is provided, filters the table by `asset_id`.
+    Otherwise, returns the entire table.
+
+    Args:
+        asset_id (str, optional): The ID of the machine to filter by. Defaults to None.
+
+    Returns:
+        str: A JSON-formatted string containing the machine data.
+    """
+    # SQL query to retrieve all machines or filter by asset_id
+    query = """
+        SELECT * 
+        FROM machines
+        WHERE (%s IS NULL OR asset_id = %s);
+    """
+    
+    try:
+        # Establish a connection to the database
+        with psycopg2.connect(
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD
+        ) as conn:
+            # Execute the query and read the result into a DataFrame
+            df = pd.read_sql_query(query, conn, params=(asset_id, asset_id))
+        
+        # Convert the DataFrame to JSON format with "records" orientation
+        return df.to_json(orient="records")
+    except Exception as e:
+        # Handle any errors that occur during the process and return an error message in JSON format
+        print(f"Error while executing the query: {e}")
+        return '{"error": "An error occurred while executing the query"}'
+
+@app.get("/get_maintenance_records")
+def get_maintenance_records(time_start: datetime, time_end: datetime):
+    """
+    Retrieves maintenance records from the `maintenance_records` table
+    for records that overlap with the specified time range.
+
+    Args:
+        time_start (datetime): Start of the time range.
+        time_end (datetime): End of the time range.
+
+    Returns:
+        str: A JSON-formatted string containing the maintenance records.
+    """
+    # SQL query to retrieve records where the time ranges overlap
+    query = """
+        SELECT * 
+        FROM maintenance_records
+        WHERE start_time <= %s AND end_time >= %s;
+    """
+    
+    try:
+        # Establish a connection to the database
+        with psycopg2.connect(
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD
+        ) as conn:
+            # Execute the query and read the result into a DataFrame
+            df = pd.read_sql_query(query, conn, params=(time_end, time_start))
+        
+        # Convert the DataFrame to JSON format with "records" orientation
+        return df.to_json(orient="records")
+    except Exception as e:
+        # Handle any errors that occur during the process and return an error message in JSON format
+        print(f"Error while executing the query: {e}")
+        return '{"error": "An error occurred while executing the query"}'
+
+@app.get("/get_personal_data")
+def get_personal_data(name=None, surname=None, operator_id=None):
+    """
+    Retrieves personal data based on the given parameters from the `personal_data` table.
+    
+    Args:
+        name (str, optional): First name of the person.
+        surname (str, optional): Surname of the person.
+        operator_id (int, optional): Unique identifier for the operator.
+    
+    Returns:
+        str: JSON-formatted string containing the results.
+    """
+    # Base query
+    query = "SELECT * FROM personal_data"
+    conditions = []
+    params = []
+
+    # Determine conditions based on input parameters
+    if operator_id:
+        conditions.append("operator_id = %s")
+        params.append(operator_id)
+    elif name and surname:
+        conditions.append("name = %s AND surname = %s")
+        params.extend([name, surname])
+    elif name:
+        conditions.append("name = %s")
+        params.append(name)
+    elif surname:
+        conditions.append("surname = %s")
+        params.append(surname)
+
+    # Add conditions to query if any
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+
+    try:
+        # Establish database connection
+        with psycopg2.connect(
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD
+        ) as conn:
+            # Execute query and load results into DataFrame
+            df = pd.read_sql_query(query, conn, params=params)
+        
+        # Return results as JSON
+        return df.to_json(orient="records")
+    except Exception as e:
+        # Handle any errors during execution
+        print(f"Error while executing the query: {e}")
+        return '{"error": "An error occurred while retrieving personal data"}'
+
+
+
+# API prototype for the energy dashboard
+=======
 '''
 input: init_date, end_date
 log_id: int
@@ -880,6 +1060,7 @@ async def get_single_production(init_date, end_date,asset_id):
 
 
 
+>>>>>>> 8df213afe05ab4165ca04557f150faf8bd251133
 
 """
 // Machine Usage
@@ -890,7 +1071,7 @@ const energy = {
     totalPower: "",
     totalConsumption: "",
     totalCost: "",
-    energyContributions: "", // Cosa vuol dire?
+    energy Contributions: "", // Cosa vuol dire?
     machines: [
         {
             machineId: "",
@@ -1014,23 +1195,13 @@ const singleEnergy = {
     totalPower: "",
     totalConsumption: "",
     totalCost: "",
-    energyContributions: "",
-    workingConsumption: "",
+    energyContributions: "", // Cosa vuol dire?
+    workingConsumption: "", 
     idleConsumption: "",
-    energyEfficiencyRatio: "",
-    energyConsumptionPerUnit: "",
-    renewableEnergyUsagePercentage: "",
-    carbonFootprint: "",
-    chartType: "",
-    Chart: [
-        {
-            date: "",
-            totalConsumption: "",
-            workingConsumption: "",
-            idleConsumption: ""
-        },
-    ]
-}
+    energyEfficiencyRatio: "", // Cosa vuol dire?
+    energyConsumptionPerUnit: "", // Cosa vuol dire?
+    renewableEnergyUsagePercentage: "", // Cosa vuol dire?
+    carbonFootprint: "", // Cosa vuol dire?
 """
 
 @app.get("/single_energy_detail")
@@ -1145,11 +1316,11 @@ const Financial = {
     dataRange: "",
     grossMargin: "",
     roi: "",
-    revenuePerEmployee: "",
-    salesGrowthRate: "",
+    revenuePerEmployee: "", // Finto fisso
+    salesGrowthRate: "", 
     totalOperationalCost: "",
     costPerUnit: "",
-    costPerCycle: "",
+    costPerCycle: "", 
     totalEnergyCost: "",
     chartType: "",
     Chart: [
