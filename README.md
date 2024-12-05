@@ -7,7 +7,6 @@
   - [🚀 Getting Started](#-getting-started)
     - [Prerequisites](#prerequisites)
     - [Setting Up the Database](#setting-up-the-database)
-    - [Using pgAdmin (optional)](#using-pgadmin-optional)
   - [🧪 Testing the Database](#-testing-the-database)
   - [Try our API](#try-our-api)
   - [Understanding the Architecture and E-R Schema of the Database](#understanding-the-architecture-and-e-r-schema-of-the-database)
@@ -23,52 +22,83 @@ The repository contains the following files and directories:
 
 ```bash
 📂 Project Root
-├── 🗄️ backup.py
-├── 🔐 backups_decryption
-│   ├── 🔓 decrypt_backup.py
-│   ├── 🔑 enc_key.key
-│   └── 🛠️ generate_key.py
-├── 🔒 backups_encrypted
+├── 📂 app
+│   ├── 📄 backup.py
+│   ├── 📄 file_cloud_backup.sh
+│   ├── 📄 main.py
+│   ├── 📄 run_backup.sh
+│   ├── 📄 test_database.py
+│   └── 🛠️ .env
+├── 📂 backups_decryption
+│   ├── 📄 decrypt_backup.py
+│   └── 📄 generate_key.py
 ├── 🛠️ build_db.sh
+├── 🐳 docker-compose.yml
 ├── 🐳 dockerfile
-├── 🗂️ exports.sql
-├── 🖼️ images
-│   ├── 🏗️ architecture_diagram.png
-│   └── 📊 er_schema.png
+├── 📄 exports.sql
+├── 📂 images
+│   ├── 🖼️ architecture_diagram.png
+│   └── 🖼️ er_schema.png
 ├── 📜 LICENSE
-├── 📝 query_template.py
 ├── 📖 README.md
-├── 📦 requirements.txt
-├── 📊 smart_app_data.csv
-└── 🧪 test_database.py
+├── 📄 requirements.txt
+└── 📊 smart_app_data.csv
 ```
 
 In order the contents are:
 
 - **`backup.py`**
-  A Python script that backs up the database and saves the encrypted backup file to the `backups_encrypted` directory.
+A Python script for managing database backups and saving the files to the appropriate directory.
+
+- **`file_cloud_backup.sh`**
+A shell script for automating the process of uploading backup files to a cloud storage service.
+
+- **`main.py`**
+The main entry point for the FastAPI application, serving the API endpoints.
+
+- **`run_backup.sh`**
+A shell script to trigger scheduled backups of the database.
+
+- **`.env`**
+A configuration file containing environment variables for database credentials, API settings, and other sensitive information.
+
 - **`backups_decryption`**
-  - **`decrypt_backup.py`**
-    A Python script that decrypts the encrypted backup files from the `backups_encrypted` directory.
-  - **`enc_key.key`** A file containing the encryption key used to encrypt the database backups.
-  - **`generate_key.py`**
-    A Python script that generates a new encryption key and saves it to the `enc_key.key` file.
-- **`backups_encrypted`**
-  A directory containing encrypted database backups.
+    **`decrypt_backup.py`**
+    A Python script for decrypting encrypted database backup files.
+    **`generate_key.py`**
+    A Python script for generating and saving a new encryption key used for securing backups.
 - **`build_db.sh`**
-  A shell script that creates a new database in the smart-database instance and imports the schema and initial data from the provided SQL file.
+A shell script that initializes a new database instance, applies the schema, and imports initial data from the provided SQL dump.
+
+- **`docker-compose.yml`**
+A Docker Compose configuration file to orchestrate the services required by the project (e.g., database, API, backups).
+
 - **`dockerfile`**
-  A Dockerfile that can be used to build a custom Docker image for the project.
+A Dockerfile used to build a custom Docker image for the project, including database tools and the FastAPI application.
+
 - **`exports.sql`**
-  A PostgreSQL database dump. This contains the schema and initial data required for the project. It can be imported into the smart-database instance using the `build_db.sh` script.
-- **`smart_app_data.csv`**
-  A CSV file containing real-time data used to fill the database for testing and demonstration purposes.
-- **`query_template`**
-  A Python file to show how to query the database.
+A PostgreSQL dump file containing the schema and seed data for the project.
+
+- **`images`**
+    - **`architecture_diagram.png`**
+    A diagram illustrating the architecture of the project.
+    - **`er_schema.png`**
+    An entity-relationship schema for the database design.
+
+- **`LICENSE`**
+The license file specifying the terms of use for this project.
+
+-**`README.md`**
+The file you're reading right now.
+
 - **`requirements.txt`**
-  A file containing the required Python packages for the project.
+A file listing all required Python packages to be installed for the project.
+
+- **`smart_app_data.csv`**
+A dataset in CSV format used to populate the database for testing or demonstration purposes.
+
 - **`test_database.py`**
-  A Python script that contains unit tests for the database functions (see the Testing section for more details).
+A Python script containing unit tests for validating database functionality.
 
 ## 📜 Introduction
 
@@ -86,8 +116,6 @@ This project aims to provide a data architecture framework for Industry 5.0 appl
 
 - [`Docker`](https://www.docker.com/) should be installed on your machine.
 - [`Git`](https://git-scm.com/) should be installed on your machine.
-- [`Python`](https://www.python.org/) should be installed on your machine.
-- [`pytest`](https://docs.pytest.org/en/stable/) is used for testing the database functions.
 
 ### Setting Up the Database
 
@@ -98,69 +126,20 @@ git clone https://github.com/Kreative-Performative-Individuals/smart-industrial-
 ```
 
 This will create a new directory named `smart-industrial-database` in your current working directory.
-Navigate to the cloned repository and install the required Python packages in your enviroment by using the following command:
-
+Navigate to the cloned repository and execute the following command from the terminal to build and run the Docker containers:
 ```bash
-pip install -r requirements.txt
+docker compose up --build
 ```
-
-Build the Docker image using the following command:
-
-```bash
-docker build -t smart-database .
-```
-
-This will build a new Docker image named `smart-database` based on the provided Dockerfile.
-You can check the list of Docker images on your machine using the following command:
-
-```bash
-docker images
-```
-
-1. Open your terminal or command prompt inside the cloned repository.
-2. Run the following command to start the smart-database Docker container:
-
-```bash
-docker volume create pg_data
-docker run -d --name kpi-database -p 5432:5432 -p 8002:8002 -v pg_data:/var/lib/postgresql/data  smart-database
-```
-
-This command will start a new Docker container named `kpi-database` with the required environment variables and port mappings. From now on, you can use this container to interact with the smart-database instance.
-You can check the list of running Docker containers using the following command:
-The volume `pg_data` contains data for the persistency of the database.
-
+This command will build the Docker image and start the Docker container for the smart-database instance and the pgAdmin instance. 
+You can ensure the containers are running by executing the following command:
 ```bash
 docker ps
 ```
+The database instance is already initialized with the schema and seed data from the provided SQL dump file called `exports.sql`. The database is also configured with the necessary extensions for time-series data, vector similarity search and encryption.
 
-If you remove the container, all the data will be stored in the `data` directory in the project root, so you can easily recreate the container with the same data by running the same command.
-1. Run the following commands to prepare the database:
-
-```bash
-   chmod +x build_db.sh
-```
-
-```bash
-   ./build_db.sh kpi-database exports.sql KPI_database
-```
-
-This will create a new database named `KPI_database` in the `kpi-database` instance and import the schema and initial data from the `exports.sql` file.
-
-### Using pgAdmin (optional)
+The smart-database instance will be available on port `5432`, and the pgAdmin instance will be available on port `5051`. 
 
 `pgAdmin` is a popular open-source administration and development platform for PostgreSQL. You can use pgAdmin to interact with the smart-database instance running in the Docker container. Follow the steps below to set up pgAdmin and connect it to the smart-database instance:
-
-Run the following command to install pgAdmin on Docker:
-
-```bash
-docker pull dpage/pgadmin4:latest
-```
-
-Run the following command to start the pgAdmin Docker container:
-
-```bash
-docker run --name pgadmin-postgres -p 5051:80 -e "PGADMIN_DEFAULT_EMAIL=admin@admin.com" -e "PGADMIN_DEFAULT_PASSWORD=password" -d dpage/pgadmin4
-```
 
 Open your web browser and navigate to `http://localhost:5051`. You will be prompted to log in with the default credentials. Use the following credentials to log in:
 
@@ -169,7 +148,7 @@ Open your web browser and navigate to `http://localhost:5051`. You will be promp
 
 After logging in, you can add a new server connection to the smart-database instance running in the Docker container. Use the following connection details:
 
-- Hostname/address: `172.17.0.2`
+- Hostname/address: `kpi-database`
 - Port: `5432`
 - Username: `postgres`
 - Password: `password`
@@ -210,7 +189,7 @@ We implemented our endpoints using FastAPI.
 
 After you have started the container and filled the database by using `build_db.sh`, you can try our endpoints by visiting **http://localhost:8002/docs**.
 
-There you can find the instructions and the description of the endpoints and try them using the GUI.
+There you can find the instructions and the description of the endpoints and try them using the GUI provided by `FastAPI`.
 
 ## Understanding the Architecture and E-R Schema of the Database
 
