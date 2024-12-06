@@ -704,7 +704,7 @@ def get_aggregated_kpi_base(time_start: Optional[datetime] = None, time_end: Opt
 
 
 @app.get("/get_machines_base")
-def get_machines_base(asset_id=None):
+def get_machines_base(asset_id: Optional[str]=None):
     """
     Retrieves machine information from the `machines` table.
     If `asset_id` is provided, filters the table by `asset_id`.
