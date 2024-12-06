@@ -41,7 +41,15 @@ RUN echo "listen_addresses = '*'" >> /usr/share/postgresql/postgresql.conf.sampl
     && echo "shared_preload_libraries = 'timescaledb'" >> /usr/share/postgresql/postgresql.conf.sample
 
 # Create a virtual environment and install Python dependencies inside it
-RUN python3 -m venv /opt/venv && /opt/venv/bin/pip install psycopg2-binary fastapi uvicorn pandas python-dotenv pytest
+RUN python3 -m venv /opt/venv && \
+    /opt/venv/bin/pip install --no-cache-dir \
+    psycopg2-binary \
+    fastapi \
+    uvicorn \
+    pandas \
+    python-dotenv \
+    pytest \
+    cryptography
 
 # Set the enviroment variable for the PostgreSQL data directory
 ENV POSTGRES_USER=postgres
@@ -56,10 +64,11 @@ EXPOSE 8002
 COPY ./app /app
 COPY ./exports.sql /docker-entrypoint-initdb.d/exports.sql
 
+# Run commands to enable cron jobs
+RUN mkdir app/backups
+RUN crontab -l | { cat; echo "0 0 * * * /opt/venv/bin/python3 /app/backup.py >> /app/logs/backup_log.log 2>&1"; } | crontab -
+
 # Change ownership of the app directory to avoid permission issues
 RUN chown -R postgres:postgres /app
 
-# Run PostgreSQL as the default user and start FastAPI app
-USER postgres
-
-CMD ["/bin/bash", "-c", "docker-entrypoint.sh postgres & sleep 10 && /opt/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8002"]
+CMD ["/bin/bash", "-c", "cron && docker-entrypoint.sh postgres & sleep 10 && /opt/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8002"]
