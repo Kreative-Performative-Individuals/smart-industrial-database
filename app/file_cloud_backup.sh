@@ -1,8 +1,17 @@
-# Get file path from input
-FILE_PATH=$1
+# Get the directory path
+DIRECTORY="/app/backups/"
 
+# Check if the directory exists
+if [ ! -d "$DIRECTORY" ]; then
+  echo "Error: Directory '$DIRECTORY' not found."
+  exit 1
+fi
+
+# Get the last modified file in the directory
+LAST_MODIFIED_FILE=$DIRECTORY$(ls -t "$DIRECTORY" | head -n 1)
+echo "$LAST_MODIFIED_FILE"
 # Upload the file identified by the file_path variable to File.io cloud
-RESPONSE=$(curl -F "file=@$FILE_PATH" https://file.io)
+RESPONSE=$(curl -F "file=@$LAST_MODIFIED_FILE" https://file.io)
 
 # Extract the download link from the response
 DOWNLOAD_LINK=$(echo $RESPONSE | grep -o '"link":"[^"]*' | grep -o '[^"]*$')
@@ -17,4 +26,3 @@ else
 fi
 
 # Write download link to logs file
-echo "$(date): $DOWNLOAD_LINK" >> "$log_file"

@@ -65,8 +65,11 @@ COPY ./app /app
 COPY ./exports.sql /docker-entrypoint-initdb.d/exports.sql
 
 # Run commands to enable cron jobs
-RUN mkdir app/backups
-RUN crontab -l | { cat; echo "0 0 * * * /opt/venv/bin/python3 /app/backup.py >> /app/logs/backup_log.log 2>&1"; } | crontab -
+# Update package lists and install curl
+RUN apt-get update && apt-get install -y curl
+RUN mkdir -p /app/backups
+RUN crontab -l | { cat; echo "0 0 * * 0 /opt/venv/bin/python3 /app/backup.py >> /app/logs/backup_log.log 2>&1"; } | crontab -
+RUN crontab -l | { cat; echo "1 0 * * 0 . /app/file_cloud_backup.sh >> /app/logs/cloud_backup.log 2>&1"; } | crontab -
 
 # Change ownership of the app directory to avoid permission issues
 RUN chown -R postgres:postgres /app
