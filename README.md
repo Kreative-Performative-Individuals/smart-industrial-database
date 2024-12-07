@@ -41,9 +41,7 @@ The repository contains the following files and directories:
 │   ├── 🖼️ architecture_diagram.png
 │   └── 🖼️ er_schema.png
 ├── 📜 LICENSE
-├── 📖 README.md
-├── 📄 requirements.txt
-└── 📊 smart_app_data.csv
+└── 📖 README.md
 ```
 
 In order the contents are:
@@ -91,12 +89,6 @@ The license file specifying the terms of use for this project.
 
 -**`README.md`**
 The file you're reading right now.
-
-- **`requirements.txt`**
-A file listing all required Python packages to be installed for the project.
-
-- **`smart_app_data.csv`**
-A dataset in CSV format used to populate the database for testing or demonstration purposes.
 
 - **`test_database.py`**
 A Python script containing unit tests for validating database functionality.
@@ -154,13 +146,13 @@ After logging in, you can add a new server connection to the smart-database inst
 - Username: `postgres`
 - Password: `password`
 
-If the localhost does not work, you can use the IP address of the Docker container. To find the IP address, run the following command:
+Once you have successfully connected to the smart-database instance, you can explore the database schema, tables, and data. You can also execute SQL queries, create new tables, and perform other administrative tasks using pgAdmin.
 
+If you want to stop the containers, you can run the following command:
 ```bash
-docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <container_id_or_name>
+docker compose down
 ```
-
-Replace `<container_id_or_name>` with the ID or name of the Docker container running the smart-database instance.
+This will stop and remove the containers, but the data will persist in the volumes created by Docker.
 
 ## 🧪 Testing the Database
 
@@ -207,4 +199,4 @@ DevSecOps is a set of practices that combines software development (Dev) with IT
 
 - **password hashing + salt for the postgres users passwords**: The passwords of the users of postgres by default are hashed and salted to ensure that they are not stored in plain text inside the database.
 - **encryption of specific columns for the personal data**: The personal data of the users is encrypted before being stored in the database. This ensures that the data is secure and cannot be accessed by unauthorized users.
-- **encryption of the database backups**: The database backups are encrypted before being saved to the `backups_encrypted` directory. This ensures that the backup files are secure and cannot be accessed by unauthorized users.
+- **encryption of the database backups**: The database backups are encrypted before being saved to the `/app/backups` directory of the kpi-database mounted volume. This ensures that the backup files are secure and cannot be accessed by unauthorized users.

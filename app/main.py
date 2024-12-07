@@ -1,5 +1,6 @@
 import math
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 import psycopg2
 from datetime import datetime
 from pydantic import BaseModel
@@ -24,7 +25,14 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 SALT = os.getenv("SALT")
 
 app = FastAPI()
-
+# Enable CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class AnomalyDataRequest(BaseModel):
     time: datetime
@@ -645,10 +653,10 @@ def single_machine_detail(machine_id,init_date,end_date):
 
 # Base endpoint for accessing database
 
-import pandas as pd
+#NON RITORNA NIENTE
 
 @app.get("/get_aggregated_kpi_base")
-def get_aggregated_kpi_base(time_start=None, time_end=None):
+def get_aggregated_kpi_base(time_start: Optional[datetime] = None, time_end: Optional[datetime] = None):
     """
     Retrieves data from the `aggregated_kpi` table for a specified time range
     and returns it in JSON format.
@@ -664,12 +672,19 @@ def get_aggregated_kpi_base(time_start=None, time_end=None):
     """
     # SQL query to retrieve data based on the time range
     # The condition checks for any overlap between the input range and the row's datetime range
-    query = """
-        SELECT * 
-        FROM aggregated_kpi
-        WHERE (%s IS NULL AND %s IS NULL) OR (begin_datetime <= %s AND end_datetime >= %s);
-    """
-    
+    query ="SELECT * FROM aggregated_kpi"
+    conditions = []
+    params = []
+
+    if start_time and end_time:
+        conditions.append("begin_datetime >= %s AND end_datetime <= %s")
+        params.append(time_start)
+        params.append(time_end)
+
+
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+
     try:
         # Establish a connection to the database
         with psycopg2.connect(
@@ -678,11 +693,19 @@ def get_aggregated_kpi_base(time_start=None, time_end=None):
             user=DB_USER,
             password=DB_PASSWORD
         ) as conn:
-            # Execute the SQL query and read the result into a DataFrame
-            df = pd.read_sql_query(query, conn, params=(time_end, time_start))
-        
-        # Convert the DataFrame to JSON format with "records" orientation
-        return df.to_json(orient="records")
+            with conn.cursor() as cursor:
+
+                cursor.execute(query, params)
+                rows = cursor.fetchall()
+
+                # Get column names from the cursor description
+                col_names = [desc[0] for desc in cursor.description]
+
+                # Convert rows to a list of dictionaries
+                result = [dict(zip(col_names, row)) for row in rows]
+
+                return result
+
     except Exception as e:
         # Handle any errors that occur during the process and return an error message in JSON format
         print(f"Error while executing the query: {e}")
@@ -690,7 +713,7 @@ def get_aggregated_kpi_base(time_start=None, time_end=None):
 
 
 @app.get("/get_machines_base")
-def get_machines_base(asset_id=None):
+def get_machines_base(asset_id: Optional[str]=None):
     """
     Retrieves machine information from the `machines` table.
     If `asset_id` is provided, filters the table by `asset_id`.
@@ -717,11 +740,21 @@ def get_machines_base(asset_id=None):
             user=DB_USER,
             password=DB_PASSWORD
         ) as conn:
-            # Execute the query and read the result into a DataFrame
-            df = pd.read_sql_query(query, conn, params=(asset_id, asset_id))
-        
-        # Convert the DataFrame to JSON format with "records" orientation
-        return df.to_json(orient="records")
+            with conn.cursor() as cursor:
+                # Execute the query and read the result into a DataFrame
+                # Execute query and load results into DataFrame
+                # Execute the query
+                cursor.execute(query, (asset_id, asset_id))
+                rows = cursor.fetchall()
+
+                # Get column names from the cursor description
+                col_names = [desc[0] for desc in cursor.description]
+
+                # Convert rows to a list of dictionaries
+                result = [dict(zip(col_names, row)) for row in rows]
+
+                return result
+
     except Exception as e:
         # Handle any errors that occur during the process and return an error message in JSON format
         print(f"Error while executing the query: {e}")
@@ -729,25 +762,30 @@ def get_machines_base(asset_id=None):
 
 
 @app.get("/get_maintenance_records_base")
-def get_maintenance_records_base(time_start: datetime, time_end: datetime):
+def get_maintenance_records_base(
+    time_start: Optional[datetime] = None, 
+    time_end: Optional[datetime] = None
+):
     """
-    Retrieves maintenance records from the `maintenance_records` table
-    for records that overlap with the specified time range.
-
+    Retrieves maintenance records from the `maintenance_records` table.
+    If no parameters are provided, the entire table is returned.
+    
     Args:
-        time_start (datetime): Start of the time range.
-        time_end (datetime): End of the time range.
+        time_start (Optional[datetime]): Start of the time range (inclusive).
+        time_end (Optional[datetime]): End of the time range (inclusive).
 
     Returns:
         str: A JSON-formatted string containing the maintenance records.
     """
-    # SQL query to retrieve records where the time ranges overlap
-    query = """
-        SELECT * 
-        FROM maintenance_records
-        WHERE start_time <= %s AND end_time >= %s;
-    """
-    
+    # Base query
+    query = "SELECT * FROM maintenance_records"
+    params = []
+
+    # Add filtering conditions if time range is specified
+    if time_start and time_end:
+        query += " WHERE start_time >= %s AND end_time <= %s"
+        params.extend([time_start, time_end])
+
     try:
         # Establish a connection to the database
         with psycopg2.connect(
@@ -756,18 +794,29 @@ def get_maintenance_records_base(time_start: datetime, time_end: datetime):
             user=DB_USER,
             password=DB_PASSWORD
         ) as conn:
-            # Execute the query and read the result into a DataFrame
-            df = pd.read_sql_query(query, conn, params=(time_end, time_start))
-        
-        # Convert the DataFrame to JSON format with "records" orientation
-        return df.to_json(orient="records")
+            with conn.cursor() as cursor:
+                # Execute the query and read the result into a DataFrame
+                # Execute query and load results into DataFrame
+                # Execute the query
+                cursor.execute(query, params)
+                rows = cursor.fetchall()
+
+                # Get column names from the cursor description
+                col_names = [desc[0] for desc in cursor.description]
+
+                # Convert rows to a list of dictionaries
+                result = [dict(zip(col_names, row)) for row in rows]
+                return result
+
     except Exception as e:
         # Handle any errors that occur during the process and return an error message in JSON format
         print(f"Error while executing the query: {e}")
         return '{"error": "An error occurred while executing the query"}'
-
+    
 @app.get("/get_personal_data_base")
-def get_personal_data_base(name=None, surname=None, operator_id=None):
+def get_personal_data_base(name: Optional[str] = None,
+                        surname: Optional[str] = None,
+                        operator_id: Optional[int] = None):
     """
     Retrieves personal data based on the given parameters from the `personal_data` table.
     
@@ -810,17 +859,23 @@ def get_personal_data_base(name=None, surname=None, operator_id=None):
             user=DB_USER,
             password=DB_PASSWORD
         ) as conn:
-            # Execute query and load results into DataFrame
-            df = pd.read_sql_query(query, conn, params=params)
-        
-        # Return results as JSON
-        return df.to_json(orient="records")
+            with conn.cursor() as cursor:
+                # Execute the query
+                cursor.execute(query, params)
+                rows = cursor.fetchall()
+
+                # Get column names from the cursor description
+                col_names = [desc[0] for desc in cursor.description]
+
+                # Convert rows to a list of dictionaries
+                result = [dict(zip(col_names, row)) for row in rows]
+            
+                return result
     except Exception as e:
         # Handle any errors during execution
         print(f"Error while executing the query: {e}")
         return '{"error": "An error occurred while retrieving personal data"}'
 
-from typing import Optional
 
 @app.get("/get_production_logs_base")
 def get_production_logs_base(start_time: Optional[datetime] = None, 
@@ -881,23 +936,13 @@ def get_production_logs_base(start_time: Optional[datetime] = None,
 
 @app.get("/get_real_time_data_base")
 def get_real_time_data_base(start_time: Optional[datetime] = None, 
-                       end_time: Optional[datetime] = None, 
-                       kpi: Optional[str] = None,
-                       asset_id: Optional[str] = None):
+                            end_time: Optional[datetime] = None, 
+                            kpi: Optional[str] = None,
+                            asset_id: Optional[str] = None):
     """
     Retrieve records from the `real_time_data` table based on optional filters.
-    
-    Args:
-        start_time (Optional[datetime]): The start of the datetime range.
-        end_time (Optional[datetime]): The end of the datetime range.
-        kpi (Optional[str]): The KPI value to filter on (e.g., "power", "consumption").
-        asset_id (Optional[str]): The identifier for the asset.
-
-    Returns:
-        list: A list of dictionaries containing the retrieved records.
     """
     try:
-        # Connect to the database
         with psycopg2.connect(
             host=DB_HOST,
             database=DB_NAME,
@@ -905,12 +950,10 @@ def get_real_time_data_base(start_time: Optional[datetime] = None,
             password=DB_PASSWORD
         ) as conn:
             with conn.cursor() as cursor:
-                # Base query
                 query = "SELECT * FROM real_time_data"
                 conditions = []
                 params = []
 
-                # Add conditions based on provided arguments
                 if start_time and end_time:
                     conditions.append("time >= %s AND time <= %s")
                     params.extend([start_time, end_time])
@@ -921,24 +964,26 @@ def get_real_time_data_base(start_time: Optional[datetime] = None,
                     conditions.append("asset_id = %s")
                     params.append(asset_id)
 
-                # Append WHERE clause if there are conditions
                 if conditions:
                     query += " WHERE " + " AND ".join(conditions)
 
-                # Execute the query
                 cursor.execute(query, params)
                 rows = cursor.fetchall()
-
-                # Get column names from the cursor description
                 col_names = [desc[0] for desc in cursor.description]
-
-                # Convert rows to a list of dictionaries
                 result = [dict(zip(col_names, row)) for row in rows]
-                
+
+                # Normalizza i valori problematici
+                for record in result:
+                    for key, value in record.items():
+                        if isinstance(value, float):
+                            if math.isnan(value) or math.isinf(value):
+                                record[key] = None  # Sostituisci con un valore neutrale
+
                 return result
     except Exception as e:
         print(f"An error occurred: {e}")
         return {"message": "An error occurred", "error": str(e)}
+
 
 # API prototype for the energy dashboard
 
