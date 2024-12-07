@@ -1,8 +1,0 @@
-iniconfig
-packaging
-pluggy
-psycopg2
-pytest
-pytest-mock
-fastapi>=0.68.0
-uvicorn[standard]>=0.14.0
