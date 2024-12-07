@@ -154,13 +154,13 @@ After logging in, you can add a new server connection to the smart-database inst
 - Username: `postgres`
 - Password: `password`
 
-If the localhost does not work, you can use the IP address of the Docker container. To find the IP address, run the following command:
+Once you have successfully connected to the smart-database instance, you can explore the database schema, tables, and data. You can also execute SQL queries, create new tables, and perform other administrative tasks using pgAdmin.
 
+If you want to stop the containers, you can run the following command:
 ```bash
-docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <container_id_or_name>
+docker compose down
 ```
-
-Replace `<container_id_or_name>` with the ID or name of the Docker container running the smart-database instance.
+This will stop and remove the containers, but the data will persist in the volumes created by Docker.
 
 ## 🧪 Testing the Database
 
