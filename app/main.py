@@ -23,6 +23,7 @@ DB_NAME = os.getenv("DB_NAME")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 SALT = os.getenv("SALT")
+KEY_ENC = os.getenv("KEY")
 
 app = FastAPI()
 # Enable CORS
@@ -403,88 +404,90 @@ def hash_string(in_string: str) -> str:
     return hashed_string
 
 # Query endpoints for frontend
-'''
-const user = {
-    email: "String",
-    password: "String",
-    username: "String",
-    role: "User Role (SMO / FFM)"
-}'''
 @app.post("/register")
 async def register_user(user: UserRequest):
+    """
+    Endpoint to register a new user.
+    """
     try:
+        # Connect to the database
         with psycopg2.connect(
-                host=DB_HOST,
-                database=DB_NAME,
-                user=DB_USER,
-                password=DB_PASSWORD
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD
         ) as conn:
             with conn.cursor() as cursor:
-               
-                # Print to check if parameters are passed correctly.
-                print(user)
+                # Debug: Print user details
+                print(f"Registering user: {user}")
 
-                # TODO implement the real query.
-
-                query = """
-                    SELECT COUNT(*) 
-                    FROM users 
+                # Check if the username or email already exists
+                check_query = """
+                    SELECT COUNT(*)
+                    FROM users
                     WHERE username = %s OR email = %s
                 """
-                cursor.execute(query, (user.username, user.email))
+                cursor.execute(check_query, (user.username, user.email))
+                duplicate_count = cursor.fetchone()[0]
 
-                res = cursor.fetchall()
-                if res[0][0] >= 1:
-                    return {"message":"Duplicate username or email"}
-                
-                query = """
-                    INSERT INTO users (
-                        username, password, email, role
-                    )
-                    VALUES (%s, %s, %s, %s)
+                if duplicate_count > 0:
+                    return {"message": "Duplicate username or email"}
+
+                # Insert the new user into the database
+                insert_query = """
+                    INSERT INTO users (username, password, email, role)
+                    VALUES (%s,%s, pgp_sym_encrypt(%s,%s), pgp_sym_encrypt(%s,%s))
                     RETURNING userid;
                 """
+                hashed_password = hash_string(SALT + user.password)
+                cursor.execute(insert_query, (user.username, hashed_password, user.email,KEY_ENC, user.role,KEY_ENC))
+                
+                # Fetch the newly created user ID
+                user_id = cursor.fetchone()
+                return {"data": {"userid": user_id}}
 
-                cursor.execute(query, (user.username,hash_string(SALT+user.password),user.email,user.role))
-
-                logs = cursor.fetchall()
-        return {"data": logs}
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"An error occurred during registration: {e}")
         return {"message": "An error occurred", "error": str(e)}
 
 
 @app.post("/login")
 async def login(user: LoginRequest):
+    """
+    Endpoint to authenticate a user.
+    """
     try:
+        # Connect to the database
         with psycopg2.connect(
-                host=DB_HOST,
-                database=DB_NAME,
-                user=DB_USER,
-                password=DB_PASSWORD
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD
         ) as conn:
             with conn.cursor() as cursor:
-               
-                # Print to check if parameters are passed correctly.
-                print(user)
+                # Debug: Print user details
+                print(f"Attempting login for user: {user.username}")
 
-                # TODO implement the real query.
-                
-                query = """
-                    Select * from users where username = %s and password = %s
+                # Query to validate user credentials
+                login_query = """
+                    SELECT * 
+                    FROM users 
+                    WHERE username = %s AND  password = %s;
                 """
+                hashed_password = hash_string(SALT + user.password)
+                cursor.execute(login_query, (user.username, hashed_password))
 
-                cursor.execute(query, (user.username,hash_string(SALT+user.password)))
+                # Check if any records are returned
+                user_data = cursor.fetchone()
+                if not user_data:
+                    return {"message": "Login failed"}
 
-                logs = cursor.fetchall()
-                print(len(logs))
-                if len(logs) == 0:
-                    return {"message":"login failed"}
-                    
-        return {"message":"login successful"}
+                return {"message": "Login successful"}
+
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"An error occurred during login: {e}")
         return {"message": "An error occurred", "error": str(e)}
+
 
 '''
 const dashboard = {
