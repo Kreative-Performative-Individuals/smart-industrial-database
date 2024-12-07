@@ -207,4 +207,4 @@ DevSecOps is a set of practices that combines software development (Dev) with IT
 
 - **password hashing + salt for the postgres users passwords**: The passwords of the users of postgres by default are hashed and salted to ensure that they are not stored in plain text inside the database.
 - **encryption of specific columns for the personal data**: The personal data of the users is encrypted before being stored in the database. This ensures that the data is secure and cannot be accessed by unauthorized users.
-- **encryption of the database backups**: The database backups are encrypted before being saved to the `backups_encrypted` directory. This ensures that the backup files are secure and cannot be accessed by unauthorized users.
+- **encryption of the database backups**: The database backups are encrypted before being saved to the `/app/backups` directory of the kpi-database mounted volume. This ensures that the backup files are secure and cannot be accessed by unauthorized users.
