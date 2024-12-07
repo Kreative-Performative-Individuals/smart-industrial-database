@@ -549,7 +549,7 @@ async def get_machines(init_date, end_date):
                 consumption_sum = 0 if math.isnan(consumption_sum) else consumption_sum
                 cost_sum = 0 if math.isnan(cost_sum) else cost_sum
 
-                dashboard = DashboardObj(totalMachines=total_machines,totalConsumptionPerDay=consumption_sum,totalCostPerDay=cost_sum,totalAlarm=random.randint(0,3),costAnalysis={})
+                dashboard = DashboardObj(totalMachines=total_machines,totalConsumptionPerDay=consumption_sum,totalCostPerDay=cost_sum,totalAlarm=random.randint(0,3),costAnalysis=0.0)
 
         return {"data":dashboard}
     except Exception as e:
