@@ -41,9 +41,7 @@ The repository contains the following files and directories:
 │   ├── 🖼️ architecture_diagram.png
 │   └── 🖼️ er_schema.png
 ├── 📜 LICENSE
-├── 📖 README.md
-├── 📄 requirements.txt
-└── 📊 smart_app_data.csv
+└── 📖 README.md
 ```
 
 In order the contents are:
@@ -91,12 +89,6 @@ The license file specifying the terms of use for this project.
 
 -**`README.md`**
 The file you're reading right now.
-
-- **`requirements.txt`**
-A file listing all required Python packages to be installed for the project.
-
-- **`smart_app_data.csv`**
-A dataset in CSV format used to populate the database for testing or demonstration purposes.
 
 - **`test_database.py`**
 A Python script containing unit tests for validating database functionality.
