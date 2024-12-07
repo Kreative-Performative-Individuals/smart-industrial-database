@@ -73,15 +73,20 @@
 			<div style="margin-bottom: 20px;"></div>
 			Below we provide a list of the main tables, as well as the methods and documentation for the API.
 			<ul>
-			  <li><strong>Pure KPIs</strong>:
+			  <li><strong>Tables attributes</strong>:
 				<ul>
 				
-				  <li>DESCRIZIONE DELLE TABELLE -> <code>RAPIDO RECAP DI COME VEDERE LE API IN FUNZIONE TRAMITE FAST API</code>, <code>name</code>, <code>aggregated_value</code>, <code>begin_datetime</code>,  <code>begin_datetime</code>, <code>begin_datetime</code> </li>
-				  
+				  <li>aggregated_kpi -> id[int], name[string], aggregated_value[double], begin_datetime[datetime], end_datetime[datetime], operations[str], machines[str] </li>
+				  <li>machines -> asset_id[string], name[string], type[string] capacity[string], installation_date[datetime], location[string], status[str] </li>
+				  <li>maintenance_records -> maintenance_id[int], start_time[datetime], end_time[datetime], responsible_operator_id[int], issue_description[string], maintenance_report[string], asset_id[string] </li>
+				  <li>personal_data -> operator_id[int], name[string], surname[string], birth_date[datetime], document_id[string], job_role[string], iban[string], residence[string], contact_id[int] </li>
+				  <li>production_logs -> log_id[int], start_time[datetime], end_time[datetime], responsible_operator_id[int], operation_description[string], result_summary[string], asset_id[string] </li>
+				  <li>real_time_data -> time[datetime], name[string], kpi[string], sum[double], avg[double], min[double], max[double], asset_id[string], operation[string], status[string], var[real], id[int] </li>
 				</ul>
 			  </li>
 
 			</ul>
+		Fora a live demo of the API, you can follow the instruction on the README of the repository. For a fast view of the api in action, you can use with the Swagger UI once the database is online.
 
         </p>
 
@@ -125,7 +130,20 @@
 
 		<h3>Examples</h3>
 		<pre>
->>> Quando funziona te lo faccio vede</pre>
+>>> get_machines_base("ast-5aggxyk5hb36")
+	
+[
+	{
+	"asset_id": "ast-5aggxyk5hb36",
+	"name": "Medium Capacity Cutting Machine 2",
+	"type": "Unknown",
+	"capacity": null,
+	"installation_date": null,
+	"location": null,
+	"status": "Active",
+	"description": null
+	}
+]</pre>
 
 		<hr style="border: 1px solid #000000; margin: 50px auto;">
 		
@@ -146,7 +164,19 @@
 		
 		<h3>Examples</h3>
 		<pre>
->>> Quando funziona te lo faccio vede</pre>
+>>> get_maintenance_records_base("2023-06-01T08:00:00", "2024-11-01T12:00:00")
+
+		[
+			{
+			  "maintenance_id": 1,
+			  "start_time": "2023-06-01T08:00:00",
+			  "end_time": "2024-11-01T12:00:00",
+			  "responsible_operator_id": 1,
+			  "issue_description": "Blade misalignment",
+			  "maintenance_report": "Adjusted the blade to correct the alignment.",
+			  "asset_id": "ast-yhccl1zjue2t"
+			}
+		]</pre>
 
 
 		<hr style="border: 1px solid #000000; margin: 50px auto;">
@@ -173,7 +203,20 @@
 
 		<h3>Examples</h3>
 		<pre>
-Dopo te la metto
+>>> get_personal_data_base(name="Charlie", surname="Brown", operator_id=3)
+	[
+		{
+			"operator_id": 3,
+			"name": "Charlie",
+			"surname": "Brown",
+			"birth_date": "1992-12-05",
+			"document_id": "DOC4567890",
+			"job_role": "Data Analyst",
+			"iban": "DE44X0542811101000000123456",
+			"residence": "Berlin",
+			"contact_id": 103
+		}
+	]
 </pre>
 		
 		<hr style="border: 1px solid #000000; margin: 50px auto;">
@@ -198,7 +241,19 @@ Dopo te la metto
 		</ul>
 		<h3>Examples</h3>
 		<pre>
-dopoooo</pre>
+>>>get_production_logs_base("2023-06-01T08:00:00", "2024-11-01T12:00:00", "ast-yhccl1zjue2t")
+[
+	{
+		"log_id": 1,
+		"start_time": "2023-06-01T08:00:00",
+		"end_time": "2024-11-01T12:00:00",
+		"responsible_operator_id": 1,
+		"operation_description": "Cutting steel sheets for assembly",
+		"result_summary": "Cut 200 steel sheets with no defects.",
+		"asset_id": "ast-yhccl1zjue2t"
+	}
+]
+</pre>
 
 		<hr style="border: 1px solid #000000; margin: 50px auto;">
 		

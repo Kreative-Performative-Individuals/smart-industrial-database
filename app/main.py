@@ -782,8 +782,8 @@ def get_maintenance_records_base(
 
     # Add filtering conditions if time range is specified
     if time_start and time_end:
-        query += " WHERE start_time <= %s AND end_time >= %s"
-        params.extend([time_end, time_start])
+        query += " WHERE start_time >= %s AND end_time <= %s"
+        params.extend([time_start, time_end])
 
     try:
         # Establish a connection to the database
