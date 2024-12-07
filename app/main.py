@@ -21,6 +21,7 @@ DB_HOST = os.getenv("DB_HOST")
 DB_NAME = os.getenv("DB_NAME")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
+SALT = os.getenv("SALT")
 
 app = FastAPI()
 
@@ -436,7 +437,7 @@ async def register_user(user: UserRequest):
                     RETURNING userid;
                 """
 
-                cursor.execute(query, (user.username,hash_string(user.password),user.email,user.role))
+                cursor.execute(query, (user.username,hash_string(SALT+user.password),user.email,user.role))
 
                 logs = cursor.fetchall()
         return {"data": logs}
@@ -465,7 +466,7 @@ async def login(user: LoginRequest):
                     Select * from users where username = %s and password = %s
                 """
 
-                cursor.execute(query, (user.username,hash_string(user.password)))
+                cursor.execute(query, (user.username,hash_string(SALT+user.password)))
 
                 logs = cursor.fetchall()
                 print(len(logs))
