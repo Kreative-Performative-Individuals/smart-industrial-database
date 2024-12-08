@@ -91,6 +91,156 @@
         </p>
 
         <h2>Methods and Documentation</h2>
+
+		<h3><code>Register(email:str,password:str,username:str,role:str)</code></h3>
+		<p>
+			<strong>Description:</strong> Registers a new user by checking if the provided username or email already exists in the database. 
+			If not, it inserts the new user's data (username, password, email, and role) into the database and returns the user ID. 
+			If either the username or email already exists, an error message is returned indicating a duplicate entry.
+		</p>
+
+		<p><strong>Parameters:</strong></p>
+		<ul>
+		  <li><code>email</code> str: The user's email.</li>
+		  <li><code>password</code> str: The user's password</li>
+		  <li><code>username</code> str: The user's usernam</li>
+		  <li><code>role</code> str: The user's role (either FFM or SMO)</li>
+		</ul>
+
+
+		<p><strong>Returns:</strong></p>
+		<p>The function returns the UID of the user created</table></p>
+
+		<h3>Examples</h3>
+		<pre>>>> register({"email": "test@gmail.com","password": "test","username": "test","role": "FFM"})
+{"data": {"userid": [9]}}</pre>
+		
+		<hr style="border: 1px solid #000000; margin: 50px auto;">
+
+		<h3><code>Login(username: str, password: str)</code></h3>
+		<p>
+			<strong>Description:</strong> Authenticates a user by checking if the provided username and password match an entry in the database. 
+			The password is encrypted before comparison. If the credentials are valid, the user is logged in successfully. 
+			If the username or password is incorrect, an error message indicating "login failed" is returned.
+		</p>
+		
+		<p><strong>Parameters:</strong></p>
+		<ul>
+		  <li><code>username</code> str: The user's username.</li>
+		  <li><code>password</code> str: The user's password.</li>
+		</ul>
+		
+		<p><strong>Returns:</strong></p>
+		<p>The function returns a message indicating whether the login was successful or failed.</p>
+		
+		<h3>Examples</h3>
+		<pre>>>> Login({"username": "test", "password": "test"})
+		{"message": "login successful"}</pre>
+		
+		<pre>>>> Login({"username": "wrong_user", "password": "wrong_pass"})
+		{"message": "login failed"}</pre>
+		
+		<hr style="border: 1px solid #000000; margin: 50px auto;">
+		<h3><code>get_machines(init_date: str, end_date: str)</code></h3>
+		<p>
+			<strong>Description:</strong> Retrieves an aggregated dashboard for machine data within a specified date range. It calculates the total number of machines, total consumption, and total cost within the given date range. If any data is missing or invalid, the function handles it and returns appropriate default values.
+		</p>
+
+		<p><strong>Parameters:</strong></p>
+		<ul>
+		<li><code>init_date</code> str: The start date in "YYYY-MM-DD HH:MM:SS" format to filter the data.</li>
+		<li><code>end_date</code> str: The end date in "YYYY-MM-DD HH:MM:SS" format to filter the data.</li>
+		</ul>
+
+		<p><strong>Returns:</strong></p>
+		<p>The function returns an aggregated dashboard containing:</p>
+		<ul>
+		<li><code>total_machines</code>: Total number of machines in the system.</li>
+		<li><code>totalConsumptionPerDay</code>: Total consumption within the specified date range.</li>
+		<li><code>totalCostPerDay</code>: Total cost within the specified date range.</li>
+		</ul>
+
+		<h3>Examples</h3>
+		<pre>>>> get_machines({"init_date": "2024-01-01 00:00:00", "end_date": "2024-01-02 00:00:00"})
+		{
+		"data": {
+			"total_machines": 150,
+			"totalConsumptionPerDay": 1000.5,
+			"totalCostPerDay": 500.75,
+		}
+		}</pre>
+
+		<pre>>>> get_machines({"init_date": "2024-01-01 00:00:00", "end_date": "2024-01-01 23:59:59"})
+		{
+		"data": {
+			"total_machines": 150,
+			"totalConsumptionPerDay": 500.5,
+			"totalCostPerDay": 250.25,
+		}
+		}</pre>
+		<hr style="border: 1px solid #000000; margin: 50px auto;">
+
+		<h3><code>single_machine_detail(machine_id: str, init_date: str, end_date: str)</code></h3>
+		<p>
+			<strong>Description:</strong> Retrieves detailed information for a single machine identified by its asset ID. The function gathers information such as the machine's name, its operational status, total consumption, total cost, and total power for a specified date range. If any of the data sums are missing or invalid, it handles those cases and returns default values.
+		</p>
+
+		<p><strong>Parameters:</strong></p>
+		<ul>
+		<li><code>machine_id</code> str: The unique asset ID of the machine.</li>
+		<li><code>init_date</code> str: The start date in "YYYY-MM-DD HH:MM:SS" format to filter the data.</li>
+		<li><code>end_date</code> str: The end date in "YYYY-MM-DD HH:MM:SS" format to filter the data.</li>
+		</ul>
+
+		<p><strong>Returns:</strong></p>
+		<p>The function returns detailed information for the specified machine:</p>
+		<ul>
+		<li><code>machineId</code>: The unique asset ID of the machine.</li>
+		<li><code>machineName</code>: The name of the machine.</li>
+		<li><code>machineStatus</code>: The operational status of the machine within the specified date range.</li>
+		<li><code>dataRange</code>: The date range used for filtering the data.</li>
+		<li><code>totalPower</code>: The total power consumption for the machine within the date range.</li>
+		<li><code>totalConsumption</code>: The total consumption for the machine within the date range.</li>
+		<li><code>totalCost</code>: The total cost for the machine within the date range.</li>
+		</ul>
+
+		<h3>Examples</h3>
+		<pre>>>> single_machine_detail({
+		"machine_id": "1234", 
+		"init_date": "2024-01-01 00:00:00", 
+		"end_date": "2024-01-02 00:00:00"
+		})
+		{
+		"data": {
+			"machineId": "1234",
+			"machineName": "Machine A",
+			"machineStatus": "Running",
+			"dataRange": ["2024-01-01 00:00:00", "2024-01-02 00:00:00"],
+			"totalPower": 120.5,
+			"totalConsumption": 85.75,
+			"totalCost": 45.50
+		}
+		}</pre>
+
+		<pre>>>> single_machine_detail({
+		"machine_id": "5678", 
+		"init_date": "2024-02-01 00:00:00", 
+		"end_date": "2024-02-02 00:00:00"
+		})
+		{
+		"data": {
+			"machineId": "5678",
+			"machineName": "Machine B",
+			"machineStatus": "Idle",
+			"dataRange": ["2024-02-01 00:00:00", "2024-02-02 00:00:00"],
+			"totalPower": 95.3,
+			"totalConsumption": 50.2,
+			"totalCost": 28.1
+		}
+}</pre>
+<hr style="border: 1px solid #000000; margin: 50px auto;">
+
+
 		
 		<h3><code>get_aggregated_kpi_base(time_start: Optional[datetime] = None, time_end: Optional[datetime] = None)</code></h3>
 		<p>

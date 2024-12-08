@@ -61,8 +61,6 @@ class DashboardObj(BaseModel):
     totalMachines: int
     totalConsumptionPerDay: float
     totalCostPerDay: float
-    totalAlarm: float
-    costAnalysis: float
 
 class SingleMachineDetail(BaseModel):
     machineId: str
@@ -90,6 +88,15 @@ class SingleProduction(BaseModel):
     bad_cycles: int
     average_cycle_time: float
 
+class AggregatedKPI(BaseModel):
+    name: str
+    aggregated_value: float
+    begin_datetime: str
+    end_datetime: str
+    kpi_list: list[str]
+    operations: list[str]
+    machines: list[str]
+    step: str
 
 @app.get("/machines", summary="Fetch machine records",
          description="This endpoint retrieves all records from the machines table in the database, displaying details about each machine.")
@@ -163,6 +170,35 @@ async def insert_query(statement: str, data: dict):
     except Exception as e:
         print(f"An error occurred: {e}")
         return {"message": "An error occurred", "error": str(e)}
+
+
+@app.post("/insert_aggregated_kpi", summary="Insert aggregated KPI into the table")
+async def insert_query(data: AggregatedKPI):
+    try:
+        with psycopg2.connect(
+                host=DB_HOST,
+                database=DB_NAME,
+                user=DB_USER,
+                password=DB_PASSWORD
+        ) as conn:
+            print(data)
+            with conn.cursor() as cursor:
+                # Prepare the SQL insert query
+                query = "INSERT INTO aggregated_kpi (name, aggregated_value, begin_datetime, end_datetime, kpi_list, operations, machines, step) VALUES (%s, %s, %s, %s, %s, %s, %s, %s);"
+
+                # Execute the query with the provided data
+                cursor.execute(query, (data.name, data.aggregated_value, data.begin_datetime, data.end_datetime, data.kpi_list, data.operations, data.machines, data.step))
+                
+                # Commit the transaction to save changes permanently
+                conn.commit()
+
+        return {"message": "Query inserted successfully"}
+
+    except Exception as e:
+        # Log the error and return an error message
+        print(f"An error occurred: {e}")
+        return {"message": "An error occurred", "error": str(e)}
+
 
 
 @app.get("/maintenance_records", summary="Fetch maintenance records",
@@ -489,23 +525,11 @@ async def login(user: LoginRequest):
         return {"message": "An error occurred", "error": str(e)}
 
 
-'''
-const dashboard = {
-    totalMachines: "",
-    totalConsumptionPerDay: "",
-    totalCostPerDay: "",
-    totalAlarm: "",
-    costAnalysis: {},
-    recentlyViewed: {
-        machineUsage: [{}],
-        energy: [{}],
-        production: [{}]
-    }
-}
-'''
+
 @app.get("/get_machines")
 async def get_machines(init_date, end_date):
     try:
+        # Connect to the database
         with psycopg2.connect(
                 host=DB_HOST,
                 database=DB_NAME,
@@ -513,11 +537,10 @@ async def get_machines(init_date, end_date):
                 password=DB_PASSWORD
         ) as conn:
             with conn.cursor() as cursor:
+                # Parse the input date to a timestamp
                 timestamp = datetime.strptime(init_date, "%Y-%m-%d %H:%M:%S")
-                # Print to check if parameters are passed correctly.
-                # TODO implement the real query.
-                
 
+                # Query to get the total number of machines
                 query = """
                         select Count(*) from machines 
                     """
@@ -525,57 +548,51 @@ async def get_machines(init_date, end_date):
                 total_machines = cursor.fetchall()[0][0]
                 print(total_machines)
 
-
+                # Query to calculate the total consumption within the given date range
                 query = """
                     Select sum from real_time_data where time >= %s and time <= %s and kpi = %s
                 """
-                cursor.execute(query,(init_date,end_date,"consumption"))
-
+                cursor.execute(query, (init_date, end_date, "consumption"))
                 logs = cursor.fetchall()
                 consumption_sum = 0
                 for log in logs:
                     consumption_sum += log[0]
-                
+
+                # Query to calculate the total cost within the given date range
                 query = """
                     Select sum from real_time_data where time >= %s and time <= %s and kpi = %s
                 """
-                cursor.execute(query,(init_date,end_date,"cost"))
-
+                cursor.execute(query, (init_date, end_date, "cost"))
                 logs = cursor.fetchall()
                 cost_sum = 0
                 for log in logs:
-                    cost_sum += log[0]                    
+                    cost_sum += log[0]
 
 
-                # Create a sequence of integers representing the components of the timestamp
-                timestamp_ints = [timestamp.year, timestamp.month, timestamp.day, timestamp.hour, timestamp.minute, timestamp.second]
-                random.seed(sum(timestamp_ints))
+                # Handle cases where the sums might be NaN
                 consumption_sum = 0 if math.isnan(consumption_sum) else consumption_sum
                 cost_sum = 0 if math.isnan(cost_sum) else cost_sum
 
-                dashboard = DashboardObj(total_machines=total_machines,totalConsumptionPerDay=consumption_sum,totalCostPerDay=cost_sum,totalAlarm=random.randint(0,3),costAnalysis={}
-                                         )
+                # Construct a dashboard response object
+                dashboard = DashboardObj(
+                    total_machines=total_machines,
+                    totalConsumptionPerDay=consumption_sum,
+                    totalCostPerDay=cost_sum,
+                )
 
-        return {"data":dashboard}
+        # Return the dashboard data
+        return {"data": dashboard}
+
     except Exception as e:
+        # Error handling
         print(f"An error occurred: {e}")
         return {"message": "An error occurred", "error": str(e)}
-    
 
-'''// Single Machine Detail
-const singleMachines = {
-    machineId: "",
-    machineName: "",
-    machineStatus: "",
-    dataRange: "",
-    totalPower: "",
-    totalConsumption: "",
-    totalCost: "",
-}'''
-
+# Single Machine Detail
 @app.get("/single_machine_detail")
-def single_machine_detail(machine_id,init_date,end_date):
+def single_machine_detail(machine_id, init_date, end_date):
     try:
+        # Connect to the database
         with psycopg2.connect(
                 host=DB_HOST,
                 database=DB_NAME,
@@ -583,61 +600,61 @@ def single_machine_detail(machine_id,init_date,end_date):
                 password=DB_PASSWORD
         ) as conn:
             with conn.cursor() as cursor:
-               
-                # Print to check if parameters are passed correctly
-
-                # TODO implement the real query.
-                
-                print("hello")
+                # Query to get the machine name using its asset_id
                 query = """
                     Select name from machines where asset_id = %s
                 """
-
                 cursor.execute(query, (machine_id,))
                 logs = cursor.fetchall()
                 machineName = logs[0][0]
+
+                # Query to get the machine status based on its asset_id and the given date range
                 query = """
                     Select operations from real_time_data where asset_id = %s and time >= %s and time <= %s
                 """
-
-                cursor.execute(query, (machine_id,init_date,end_date))
+                cursor.execute(query, (machine_id, init_date, end_date))
                 logs = cursor.fetchall()
                 machineStatus = logs[0][0]
-                datarange = [init_date,end_date]            
+
+                # Define the date range
+                datarange = [init_date, end_date]
+
+                # Query to calculate the total consumption for the machine
                 query = """
                     Select sum from real_time_data where time >= %s and time <= %s and kpi = %s and asset_id = %s
                 """
-                cursor.execute(query,(init_date,end_date,"consumption",machine_id))
-
+                cursor.execute(query, (init_date, end_date, "consumption", machine_id))
                 logs = cursor.fetchall()
                 consumption_sum = 0
                 for log in logs:
                     consumption_sum += log[0]
-                
+
+                # Query to calculate the total cost for the machine
                 query = """
                     Select sum from real_time_data where time >= %s and time <= %s and kpi = %s and asset_id = %s
                 """
-                cursor.execute(query,(init_date,end_date,"cost",machine_id))
-
+                cursor.execute(query, (init_date, end_date, "cost", machine_id))
                 logs = cursor.fetchall()
                 cost_sum = 0
                 for log in logs:
                     cost_sum += log[0]
 
+                # Query to calculate the total power for the machine
                 query = """
                     Select sum from real_time_data where time >= %s and time <= %s and kpi = %s and asset_id = %s
                 """
-                cursor.execute(query,(init_date,end_date,"power",machine_id))
-
+                cursor.execute(query, (init_date, end_date, "power", machine_id))
                 logs = cursor.fetchall()
                 total_power = 0
                 for log in logs:
                     total_power += log[0]
 
+                # Handle cases where the sums might be NaN
                 consumption_sum = 0 if math.isnan(consumption_sum) else consumption_sum
                 cost_sum = 0 if math.isnan(cost_sum) else cost_sum
                 total_power = 0 if math.isnan(total_power) else total_power
-                # Construct and return the final response object
+
+                # Construct and return the final response object with all the data
                 single_machine_detail = SingleMachineDetail(
                     machineId=machine_id,
                     machineName=machineName,
@@ -648,9 +665,11 @@ def single_machine_detail(machine_id,init_date,end_date):
                     totalCost=cost_sum
                 )
 
-            return {"data":single_machine_detail}
+            # Return the data for the single machine
+            return {"data": single_machine_detail}
 
     except Exception as e:
+        # Error handling
         print(f"An error occurred: {e}")
         return {"message": "An error occurred", "error": str(e)}
 
