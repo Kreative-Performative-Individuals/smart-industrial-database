@@ -335,8 +335,53 @@
 </pre>
 
 		<hr style="border: 1px solid #000000; margin: 50px auto;">
-
+		<h3><code>get_real_time_data(start_date: str, end_date: str, kpi_name: str, machines: Optional[str] = None, operations: Optional[str] = None)</code></h3>
+		<p>
+			<strong>Description:</strong> Retrieves real-time data from the `real_time_data` table filtered by `kpi_name`, machine, operation, and time range. If either the `machines` or `operations` are not provided, the query adjusts accordingly.
+		</p>
 		
+		<p><strong>Parameters:</strong></p>
+		<ul>
+		  <li><code>start_date</code> (required, str): The start date of the time filter (in string format, e.g., "2020-01-01").</li>
+		  <li><code>end_date</code> (required, str): The end date of the time filter (in string format, e.g., "2022-12-31").</li>
+		  <li><code>kpi_name</code> (required, str): The name of the KPI for filtering the data (e.g., "hello").</li>
+		  <li><code>machines</code> (optional, str): A comma-separated list of machine names to filter by (e.g., "machineA,machineB").</li>
+		  <li><code>operations</code> (optional, str): A comma-separated list of operations to filter by (e.g., "operation1,operation2").</li>
+		</ul>
+		
+		<p><strong>Returns:</strong></p>
+		<p>The function returns the real-time data in an array of dictionaries, where each dictionary represents a row of the queried data.</p>
+		
+		<h3>Examples</h3>
+<pre>
+>>> get_real_time_data("2020-01-01", "2022-12-31", "hello", "machineA,machineB", "operation1,operation2")
+
+[
+	{
+		"asset_id": 1,
+		"operations": "operation1",
+		"time": "2020-01-01T00:00:00",
+		"sum": 100.0,
+		"avg": 50.0,
+		"min": 10.0,
+		"max": 200.0,
+		"name": "machineA"
+	},
+	{
+		"asset_id": 2,
+		"operations": "operation2",
+		"time": "2020-01-02T00:00:00",
+		"sum": 120.0,
+		"avg": 60.0,
+		"min": 15.0,
+		"max": 220.0,
+		"name": "machineB"
+	}
+]
+</pre>
+		
+		<hr style="border: 1px solid #000000; margin: 50px auto;">
+			
 		<h3><code>get_machines_base(asset_id: Optional[str]=None)</code></h3>
 		<p>
 			<strong>Description:</strong> Retrieves machine information from the machines table. If asset_id is provided, filters the table by asset_id. Otherwise, returns the entire table.

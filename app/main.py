@@ -747,7 +747,7 @@ def get_real_time_data(
 ):
     # SQL query template with parameterized placeholders
     base_query = """
-    SELECT asset_id, operations, time, sum, avg, min, max, name
+    SELECT asset_id, operation, time, sum, avg, min, max, name
     FROM real_time_data
     WHERE kpi = %s
     """
@@ -759,7 +759,7 @@ def get_real_time_data(
     if machines and operations:
         machine_conditions = []
         for m, o in zip(machines.split(","), operations.split(",")):
-            machine_conditions.append("(name = %s AND operations = %s)")
+            machine_conditions.append("(name = %s AND operation = %s)")
             params.extend([m, o])  # Add the machine and operation to params list
         machine_filter = " AND (" + " OR ".join(machine_conditions) + ")"
         base_query += machine_filter
@@ -775,7 +775,7 @@ def get_real_time_data(
     if operations and not machines:
         machine_conditions = []
         for m in zip(operations.split(",")):
-            machine_conditions.append("(operations = %s)")
+            machine_conditions.append("(operation = %s)")
             params.extend(m)  # Add the machine and operation to params list
         machine_filter = " AND (" + " OR ".join(machine_conditions) + ")"
         base_query += machine_filter
@@ -785,9 +785,6 @@ def get_real_time_data(
     base_query += " AND time >= %s AND time <= %s"
     params.extend([start_date, end_date])
 
-    # Output the final query
-    print("Final SQL Query:", base_query)
-    print("With parameters:", params)
 
     try:
         # Establish a connection to the database
