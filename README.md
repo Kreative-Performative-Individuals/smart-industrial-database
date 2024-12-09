@@ -135,25 +135,29 @@ The database instance is already initialized with the schema and seed data from 
 
 `pgAdmin` is a popular open-source administration and development platform for PostgreSQL. You can use pgAdmin to interact with the smart-database instance running in the Docker container. Follow the steps below to set up pgAdmin and connect it to the smart-database instance:
 
-Open your web browser and navigate to `http://localhost:5051`. You will be prompted to log in with the default credentials. Use the following credentials to log in:
+1. Open your web browser and navigate to `http://localhost:5051`. You will be prompted to log in with the default credentials. Use the following credentials to log in:
 
 - Email: `admin@admin.com`
 - Password: `password`
 
-After logging in, you can add a new server connection to the smart-database instance running in the Docker container. Use the following connection details:
+2. After logging in, you can add a new server connection to the smart-database instance running in the Docker container. Use the following connection details:
 
 - Hostname/address: `kpi-database`
 - Port: `5432`
 - Username: `postgres`
 - Password: `password`
 
-Once you have successfully connected to the smart-database instance, you can explore the database schema, tables, and data. You can also execute SQL queries, create new tables, and perform other administrative tasks using pgAdmin.
+3. Once you have successfully connected to the smart-database instance, you can explore the database schema, tables, and data. You can also execute SQL queries, create new tables, and perform other administrative tasks using pgAdmin.
 
 If you want to stop the containers, you can run the following command:
 ```bash
 docker compose down
 ```
 This will stop and remove the containers, but the data will persist in the volumes created by Docker.
+You can check the volumes by running the following command:
+```bash
+docker volume ls
+```
 
 ## 🧪 Testing the Database
 
