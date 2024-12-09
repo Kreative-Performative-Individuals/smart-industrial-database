@@ -101,7 +101,7 @@ class RealTimeData(BaseModel):
     machines: list[str]
     operations: list[str]
 
-
+#salva
 @app.get("/machines", summary="Fetch machine records",
          description="This endpoint retrieves all records from the machines table in the database, displaying details about each machine.")
 async def fetch_machines():
@@ -130,7 +130,7 @@ async def fetch_machines():
         print(f"An error occurred: {e}")
         return {"message": "An error occurred", "error": str(e)}
 
-
+#Salva
 @app.get("/query", summary="Fetch query records", )
 async def fetch_query(statement: str):
     print("Statement", statement)
@@ -154,7 +154,7 @@ async def fetch_query(statement: str):
         print(f"An error occurred: {e}")
         return {"message": "An error occurred", "error": str(e)}
 
-
+#Salva
 @app.post("/insert", summary="Insert records", )
 async def insert_query(statement: str, data: dict):
     try:
@@ -176,7 +176,7 @@ async def insert_query(statement: str, data: dict):
         return {"message": "An error occurred", "error": str(e)}
 
 
-@app.post("/insert_aggregated_kpi", summary="Insert aggregated KPI into the table")
+"""@app.post("/insert_aggregated_kpi", summary="Insert aggregated KPI into the table")
 async def insert_query(data: AggregatedKPI):
     try:
         with psycopg2.connect(
@@ -202,9 +202,9 @@ async def insert_query(data: AggregatedKPI):
         # Log the error and return an error message
         print(f"An error occurred: {e}")
         return {"message": "An error occurred", "error": str(e)}
+"""
 
-
-
+"""
 @app.get("/maintenance_records", summary="Fetch maintenance records",
          description="This endpoint retrieves all maintenance records from the database and displays them.")
 async def fetch_maintenance_records():
@@ -226,9 +226,9 @@ async def fetch_maintenance_records():
     except Exception as e:
         print(f"An error occurred: {e}")
         return {"message": "An error occurred", "error": str(e)}
+"""
 
-
-@app.get("/real_time_data", summary="Fetch real-time data",
+"""@app.get("/real_time_data", summary="Fetch real-time data",
          description="This endpoint retrieves all real-time data related to KPIs from the database, enabling live performance tracking.")
 async def fetch_personal_data():
     try:
@@ -249,8 +249,8 @@ async def fetch_personal_data():
     except Exception as e:
         print(f"An error occurred: {e}")
         return {"message": "An error occurred", "error": str(e)}
-
-
+"""
+"""
 @app.get("/production_logs", summary="Fetch production logs",
          description="This endpoint retrieves all production logs from the database, useful for monitoring and analytics purposes.")
 async def fetch_production_logs():
@@ -273,7 +273,7 @@ async def fetch_production_logs():
         print(f"An error occurred: {e}")
         return {"message": "An error occurred", "error": str(e)}
 
-
+"""
 # TODO, implement a query to return requested data to allow group 3 to do their calculations.
 # Please check the data format of the return. 
 # The query should filter based on the parameters: 
@@ -297,6 +297,7 @@ def row_to_dict(columns, row):
     return {col: safe_float(value) for col, value in zip(columns, row)}
 
 
+#Salva
 @app.get("/historical_data")
 async def get_historical_data():
     try:
@@ -320,28 +321,7 @@ async def get_historical_data():
         print(f"An error occurred: {e}")
         return {"message": "An error occurred", "error": str(e)}
     
-
-# TODO, implement the query for the endpoint.
-# This endpoint should allow group 3 to post data inside the database. 
-# The data that should be stored is like this 
-# datapoint = {
-#     'timestamp': 'timepoint',
-#     'isset_id': 'ast-yhccl1zjue2t',
-#     'name': 'metal_cutting',
-#     'kpi': 'time',
-#     'operation': 'working',
-#     'sum': float, 
-#     'avg': float,
-#     'min': float,
-#     'max': float,
-#     'var': float
-# }
-
-# And should go in the real-time data table. The AnomlayDataRequest object stores the informations that are needed to perform the query
-# there is an extra field called anomaly, that can be ignored if we don't want to use that, but they can identify anomalies so it's 
-# included. Test the endponits before pushing so that we are sure group 3 can use them.
-
-
+"""
 @app.post("/store_datapoint")
 async def post_data_point(data: AnomalyDataRequest):
     try:
@@ -372,8 +352,8 @@ async def post_data_point(data: AnomalyDataRequest):
     except Exception as e:
         print(f"An error occurred: {e}")
         return {"message": "An error occurred", "error": str(e)}
-
-
+"""
+"""
 # FILTERED GET HISTORICAL DATA
 @app.get("/filtered_historical_data")
 def filtered_get_historical_data(name: str, asset_id: str, kpi: str, operation: str, timestamp_start: datetime, timestamp_end: datetime):
@@ -434,7 +414,7 @@ def filtered_get_historical_data(name: str, asset_id: str, kpi: str, operation: 
         print(f"Errore: {e}")
         return {"message": "An error occurred", "error": str(e)}
 
-
+"""
 #hash strings, such as password
 def hash_string(in_string: str) -> str:
     hashed_string = hashlib.sha256(in_string.encode('utf-8')).hexdigest()
@@ -526,7 +506,7 @@ async def login(user: LoginRequest):
         return {"message": "An error occurred", "error": str(e)}
 
 
-
+#Salva
 @app.get("/get_machines")
 async def get_machines(init_date, end_date):
     try:
@@ -589,6 +569,7 @@ async def get_machines(init_date, end_date):
         print(f"An error occurred: {e}")
         return {"message": "An error occurred", "error": str(e)}
 
+#Salva        
 # Single Machine Detail
 @app.get("/single_machine_detail")
 def single_machine_detail(machine_id, init_date, end_date):
@@ -1125,7 +1106,7 @@ const energy = {
 
 """
 
-
+"""
 @app.get("/energy")
 def get_energy(init_date, end_date):
     try:
@@ -1209,28 +1190,10 @@ def get_energy(init_date, end_date):
     except Exception as e:
         print(f"An error occurred: {e}")
         return {"error": str(e)}
+"""
 
 
 """
-// Single Energy Detail
-input : machine_id, init_date, end_date
-const singleEnergy = {
-    machineId: "",
-    machineName: "",
-    machineStatus: "",
-    dataRange: "",
-    totalPower: "",
-    totalConsumption: "",
-    totalCost: "",
-    energyContributions: "", // Cosa vuol dire?
-    workingConsumption: "", 
-    idleConsumption: "",
-    energyEfficiencyRatio: "", // Cosa vuol dire?
-    energyConsumptionPerUnit: "", // Cosa vuol dire?
-    renewableEnergyUsagePercentage: "", // Cosa vuol dire?
-    carbonFootprint: "", // Cosa vuol dire?
-"""
-
 @app.get("/single_energy_detail")
 def single_energy_detail(machine_id, time_start, time_end):
     try:
@@ -1335,9 +1298,4 @@ def single_energy_detail(machine_id, time_start, time_end):
     except Exception as e:
         print(f"An error occurred: {e}")
         return {"error": str(e)}
-                
-
-
-
-
-
+"""     
