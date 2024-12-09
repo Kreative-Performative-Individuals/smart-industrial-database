@@ -743,7 +743,9 @@ def get_real_time_data(
     end_date: str,
     kpi_name: str,
     machines: Optional[str] = None,
-    operations: Optional[str] = None
+    operation: Optional[str] = None,
+    value:Optional[float] = None
+
 ):
     # SQL query template with parameterized placeholders
     base_query = """
@@ -755,36 +757,30 @@ def get_real_time_data(
     # Initialize parameters list with kpi_name
     params = [kpi_name]
 
+        
     # Dynamically add machine and operation filters if provided
-    if machines and operations:
-        machine_conditions = []
-        for m, o in zip(machines.split(","), operations.split(",")):
-            machine_conditions.append("(name = %s AND operation = %s)")
-            params.extend([m, o])  # Add the machine and operation to params list
-        machine_filter = " AND (" + " OR ".join(machine_conditions) + ")"
-        base_query += machine_filter
-
-    if machines and not operations:
+    if machines:
         machine_conditions = []
         for m in zip(machines.split(",")):
             machine_conditions.append("(name = %s)")
-            params.extend(m)  # Add the machine and operation to params list
+            params.extend([m])  # Add the machine and operation to params list
         machine_filter = " AND (" + " OR ".join(machine_conditions) + ")"
         base_query += machine_filter
 
-    if operations and not machines:
-        machine_conditions = []
-        for m in zip(operations.split(",")):
-            machine_conditions.append("(operation = %s)")
-            params.extend(m)  # Add the machine and operation to params list
-        machine_filter = " AND (" + " OR ".join(machine_conditions) + ")"
-        base_query += machine_filter
-
+    if value != None and operation != None:
+        params.extend([value])
+        if operation == "sum":
+            base_query+=" And sum = %s"
+        elif operation == "avg":
+            base_query += " And avg = %s"
+        elif operation == "max":
+            base_query += " And max = %s"
+        elif operation == "min":
+            base_query += " And min = %s"
 
     # Add time filtering
     base_query += " AND time >= %s AND time <= %s"
     params.extend([start_date, end_date])
-
 
     try:
         # Establish a connection to the database
@@ -808,7 +804,7 @@ def get_real_time_data(
                     {col: handle_nan_inf(value) for col, value in row.items()}
                     for row in results_dict
                 ]
-        print(results_dict)
+        print(base_query)
         return {"data": results_dict}   
 
     except Exception as e:
