@@ -165,9 +165,12 @@ docker exec -it kpi-database bash
 ```bash
 cd /app
 ```
-3. run the following command to test the database:
+3. run the following command to activate the virtual environment:
 ```bash
-source /opt/venv/bin/activate \
+source /opt/venv/bin/activate
+```
+4. run the following command to test the database:
+```bash
 pytest test_database.py -v
 ```
 This will run the tests we wrote and show you the results.
