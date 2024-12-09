@@ -346,7 +346,8 @@
 		  <li><code>end_date</code> (required, str): The end date of the time filter (in string format, e.g., "2022-12-31").</li>
 		  <li><code>kpi_name</code> (required, str): The name of the KPI for filtering the data (e.g., "hello").</li>
 		  <li><code>machines</code> (optional, str): A comma-separated list of machine names to filter by (e.g., "machineA,machineB").</li>
-		  <li><code>operations</code> (optional, str): A comma-separated list of operations to filter by (e.g., "operation1,operation2").</li>
+		  <li><code>operation</code> he type of aggregation operation to filter (e.g., "sum", "avg", "max", or "min").</li>
+		  <li><code>value: Optional[float] = None    # The specific value to filter the selected operation (e.g., sum = 100.0).</code></li>
 		</ul>
 		
 		<p><strong>Returns:</strong></p>
@@ -354,7 +355,7 @@
 		
 		<h3>Examples</h3>
 <pre>
->>> get_real_time_data("2020-01-01", "2022-12-31", "hello", "machineA,machineB", "operation1,operation2")
+>>> get_real_time_data("2020-01-01", "2022-12-31", "hello", "machineA,machineB", "operation1","value")
 
 [
 	{
