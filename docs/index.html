@@ -592,25 +592,14 @@ The function returns a report of the operation results (logs of the insert query
 
 <h3>Examples</h3>
 
-<pre> 
-	
->>> get_real_time_data_base("2024-03-01T00:00:00", "2024-03-01T00:00:00", "metal_cutting", "ast-yhccl1zjue2t")
-[
-	{
-	  "time": "2024-03-01T00:00:00",
-	  "name": "metal_cutting",
-	  "kpi": "time",
-	  "sum": 0,
-	  "avg": 0,
-	  "min": 0,
-	  "max": 0,
-	  "asset_id": "ast-yhccl1zjue2t",
-	  "operation": "working",
-	  "status": "Normal",
-	  "var": null,
-	  "id": 1
-	}
+<pre>>>> post_data_point(data={"time": "2024-03-01T00:00:00", "asset_id": "ast-yhccl1zjue2t", "name": "metal_cutting", "kpi": "time", "sum": 0, "avg": 0, "min": 0, "max": 0, "operation": "working", "status": "Normal"})
+{
+"data": [
+	[
+	44737
+	]
 ]
+}
 </pre>
     </main>
 </body>
