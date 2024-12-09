@@ -92,6 +92,14 @@ class AggregatedKPI(BaseModel):
     machines: list[str]
     step: int
 
+class RealTimeData(BaseModel):
+    machines: list[str]
+    operations: list[str]
+    start_date: str
+    end_date: str 
+    kpi_name: str
+
+
 @app.get("/machines", summary="Fetch machine records",
          description="This endpoint retrieves all records from the machines table in the database, displaying details about each machine.")
 async def fetch_machines():
@@ -666,8 +674,6 @@ def single_machine_detail(machine_id, init_date, end_date):
 
 # Base endpoint for accessing database
 
-#NON RITORNA NIENTE
-
 @app.get("/get_aggregated_kpi_base")
 def get_aggregated_kpi_base(time_start: Optional[datetime] = None, time_end: Optional[datetime] = None):
     """
@@ -723,8 +729,96 @@ def get_aggregated_kpi_base(time_start: Optional[datetime] = None, time_end: Opt
         # Handle any errors that occur during the process and return an error message in JSON format
         print(f"Error while executing the query: {e}")
         return '{"error": "An error occurred while executing the query"}'
+    
+# Helper function to replace NaN and Inf values
+def handle_nan_inf(value):
+    if isinstance(value, float):
+        if math.isnan(value) or math.isinf(value):
+            return None 
+    return value
+
+@app.get("/get_real_time_data")
+def get_real_time_data(
+    start_date: str,
+    end_date: str,
+    kpi_name: str,
+    machines: Optional[str] = None,
+    operations: Optional[str] = None
+):
+    # SQL query template with parameterized placeholders
+    base_query = """
+    SELECT asset_id, operations, time, sum, avg, min, max, name
+    FROM real_time_data
+    WHERE kpi = %s
+    """
+
+    # Initialize parameters list with kpi_name
+    params = [kpi_name]
+
+    # Dynamically add machine and operation filters if provided
+    if machines and operations:
+        machine_conditions = []
+        for m, o in zip(machines.split(","), operations.split(",")):
+            machine_conditions.append("(name = %s AND operations = %s)")
+            params.extend([m, o])  # Add the machine and operation to params list
+        machine_filter = " AND (" + " OR ".join(machine_conditions) + ")"
+        base_query += machine_filter
+
+    if machines and not operations:
+        machine_conditions = []
+        for m in zip(machines.split(",")):
+            machine_conditions.append("(name = %s)")
+            params.extend(m)  # Add the machine and operation to params list
+        machine_filter = " AND (" + " OR ".join(machine_conditions) + ")"
+        base_query += machine_filter
+
+    if operations and not machines:
+        machine_conditions = []
+        for m in zip(operations.split(",")):
+            machine_conditions.append("(operations = %s)")
+            params.extend(m)  # Add the machine and operation to params list
+        machine_filter = " AND (" + " OR ".join(machine_conditions) + ")"
+        base_query += machine_filter
 
 
+    # Add time filtering
+    base_query += " AND time >= %s AND time <= %s"
+    params.extend([start_date, end_date])
+
+    # Output the final query
+    print("Final SQL Query:", base_query)
+    print("With parameters:", params)
+
+    try:
+        # Establish a connection to the database
+        with psycopg2.connect(
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD
+        ) as conn:
+            with conn.cursor() as cursor:
+                # Execute the query with parameters
+                cursor.execute(base_query, params)
+                results = cursor.fetchall()
+
+                # Convert results to a list of dictionaries
+                columns = [desc[0] for desc in cursor.description]
+                results_dict = [dict(zip(columns, row)) for row in results]
+
+                # Handle NaN and Inf values in the results
+                results_dict = [
+                    {col: handle_nan_inf(value) for col, value in row.items()}
+                    for row in results_dict
+                ]
+        print(results_dict)
+        return {"data": results_dict}   
+
+    except Exception as e:
+        # Handle any errors that occur during the process and return an error message in JSON format
+        print(f"Error while executing the query: {e}")
+        return {"error": "An error occurred while executing the query"}
+    
 @app.get("/get_machines_base")
 def get_machines_base(asset_id: Optional[str]=None):
     """
