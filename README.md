@@ -67,7 +67,7 @@ A configuration file containing environment variables for database credentials, 
     **`generate_key.py`**
     A Python script for generating and saving a new encryption key used for securing backups.
 - **`build_db.sh`**
-A shell script that initializes a new database instance, applies the schema, and imports initial data from the provided SQL dump.
+A shell script that initializes the database in case you deleted it after the first run.
 
 - **`docker-compose.yml`**
 A Docker Compose configuration file to orchestrate the services required by the project (e.g., database, API, backups).
@@ -130,7 +130,8 @@ docker ps
 ```
 The database instance is already initialized with the schema and seed data from the provided SQL dump file called `exports.sql`. The database is also configured with the necessary extensions for time-series data, vector similarity search and encryption.
 
-The smart-database instance will be available on port `5432`, and the pgAdmin instance will be available on port `5051`. 
+- The smart-database instance will be available on port `5432` for database connections and `8002` for API endpoints.
+- The pgAdmin instance will be available on port `5051`. 
 
 `pgAdmin` is a popular open-source administration and development platform for PostgreSQL. You can use pgAdmin to interact with the smart-database instance running in the Docker container. Follow the steps below to set up pgAdmin and connect it to the smart-database instance:
 
@@ -165,9 +166,12 @@ docker exec -it kpi-database bash
 ```bash
 cd /app
 ```
-3. run the following command to test the database:
+3. run the following command to activate the virtual environment:
 ```bash
-source /opt/venv/bin/activate \
+source /opt/venv/bin/activate
+```
+4. run the following command to test the database:
+```bash
 pytest test_database.py -v
 ```
 This will run the tests we wrote and show you the results.
@@ -175,11 +179,11 @@ This will run the tests we wrote and show you the results.
 
 ## Try our API
 
-We implemented our endpoints using FastAPI.
+We implemented our endpoints using FastAPI. You can read the documentation of the API [here](https://kreative-performative-individuals.github.io/smart-industrial-database/).
 
-After you have started the container and filled the database by using `build_db.sh`, you can try our endpoints by visiting `http://localhost:8002/docs`.
+After you have started the containers using `docker compose up --build`, you can try our endpoints by using the base URL `http://localhost:8002/`.
 
-There you can find the instructions and the description of the endpoints and try them using the GUI provided by `FastAPI`.
+Our API are designed to be used by the `processing pipeline` to store the processed data in the database, by the `kpi engine` to retrieve the data from the database and store the calculated kpis and by the `dashboard` to display the data to the user.
 
 ## Understanding the Architecture and E-R Schema of the Database
 
