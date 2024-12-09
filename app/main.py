@@ -93,11 +93,12 @@ class AggregatedKPI(BaseModel):
     step: int
 
 class RealTimeData(BaseModel):
-    machines: list[str]
-    operations: list[str]
     start_date: str
     end_date: str 
     kpi_name: str
+    column_name: str
+    machines: list[str]
+    operations: list[str]
 
 
 @app.get("/machines", summary="Fetch machine records",
@@ -738,16 +739,15 @@ def handle_nan_inf(value):
     return value
 
 
-@app.get("/get_real_time_data")
-def get_real_time_data(
-    start_date: str,
-    end_date: str,
-    kpi_name: str,
-    column_name: str,
-    machines: list[str] = None,
-    operations: list[str] = None,
-):
+@app.post("/get_real_time_data")
+def get_real_time_data(request:RealTimeData):
     # SQL query template with parameterized placeholders
+    start_date = request.start_date
+    end_date = request.end_date
+    kpi_name = request.kpi_name
+    column_name = request.column_name
+    machines = request.machines
+    operations = request.operations
     base_query = """
     SELECT asset_id, operation, time, %s
     FROM real_time_data
