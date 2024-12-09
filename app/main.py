@@ -551,7 +551,7 @@ async def get_machines(init_date, end_date):
 
                 # Query to calculate the total cost within the given date range
                 query = """
-                    Select sum from real_time_data where time >= %s and time <= %s and kpi = %s
+                    Select avg from real_time_data where time >= %s and time <= %s and kpi = %s
                 """
                 cursor.execute(query, (init_date, end_date, "cost"))
                 logs = cursor.fetchall()
@@ -566,7 +566,7 @@ async def get_machines(init_date, end_date):
 
                 # Construct a dashboard response object
                 dashboard = DashboardObj(
-                    total_machines=total_machines,
+                    totalMachines=total_machines,
                     totalConsumptionPerDay=consumption_sum,
                     totalCostPerDay=cost_sum,
                 )
@@ -601,7 +601,7 @@ def single_machine_detail(machine_id, init_date, end_date):
 
                 # Query to get the machine status based on its asset_id and the given date range
                 query = """
-                    Select operations from real_time_data where asset_id = %s and time >= %s and time <= %s
+                    Select operation from real_time_data where asset_id = %s and time >= %s and time <= %s
                 """
                 cursor.execute(query, (machine_id, init_date, end_date))
                 logs = cursor.fetchall()
@@ -622,7 +622,7 @@ def single_machine_detail(machine_id, init_date, end_date):
 
                 # Query to calculate the total cost for the machine
                 query = """
-                    Select sum from real_time_data where time >= %s and time <= %s and kpi = %s and asset_id = %s
+                    Select avg from real_time_data where time >= %s and time <= %s and kpi = %s and asset_id = %s
                 """
                 cursor.execute(query, (init_date, end_date, "cost", machine_id))
                 logs = cursor.fetchall()
@@ -632,7 +632,7 @@ def single_machine_detail(machine_id, init_date, end_date):
 
                 # Query to calculate the total power for the machine
                 query = """
-                    Select sum from real_time_data where time >= %s and time <= %s and kpi = %s and asset_id = %s
+                    Select avg from real_time_data where time >= %s and time <= %s and kpi = %s and asset_id = %s
                 """
                 cursor.execute(query, (init_date, end_date, "power", machine_id))
                 logs = cursor.fetchall()
