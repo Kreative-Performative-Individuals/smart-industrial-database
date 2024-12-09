@@ -4,18 +4,12 @@ from fastapi.middleware.cors import CORSMiddleware
 import psycopg2
 from datetime import datetime
 from pydantic import BaseModel
-from fastapi import FastAPI, HTTPException
-from datetime import datetime
 import psycopg2
 import os
 import json
-from fastapi.encoders import jsonable_encoder
-from fastapi import Query
 from typing import Optional
-from math import isnan, isinf
 from dotenv import load_dotenv
 import hashlib
-import random
 load_dotenv()
 
 DB_HOST = os.getenv("DB_HOST")
@@ -284,16 +278,13 @@ def safe_float(val):
     if isinstance(val, float):
         if val == float('inf') or val == float('-inf'):
             return str(val)  # Convert infinite values to a string representation
-        if isnan(val):
+        if math.isnan(val):
             return None  # Convert NaN values to None
     return val
 
 
 def row_to_dict(columns, row):
     return {col: safe_float(value) for col, value in zip(columns, row)}
-
-
-from math import isnan
 
 
 @app.get("/historical_data")
@@ -1257,27 +1248,6 @@ def single_energy_detail(machine_id, time_start, time_end):
         return {"error": str(e)}
                 
 
-"""
-// Financial Report
-const Financial = {
-    dataRange: "",
-    grossMargin: "",
-    roi: "",
-    revenuePerEmployee: "", // Finto fisso
-    salesGrowthRate: "", 
-    totalOperationalCost: "",
-    costPerUnit: "",
-    costPerCycle: "", 
-    totalEnergyCost: "",
-    chartType: "",
-    Chart: [
-        {
-            date: "",
-            operationalCost: "",
-        },
-    ]
-}
-"""
 
 
 
