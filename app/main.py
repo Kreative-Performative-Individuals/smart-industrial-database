@@ -740,80 +740,78 @@ def handle_nan_inf(value):
 
 @app.get("/get_real_time_data")
 def get_real_time_data(
-    start_date: str,  # The start date for the time filter (string format, e.g., "2020-01-01").
-    end_date: str,    # The end date for the time filter (string format, e.g., "2022-12-31").
-    kpi_name: str,    # The name of the KPI to filter the data (e.g., "power").
-    machines: Optional[str] = None,  # Comma-separated list of machine names for filtering (e.g., "machineA,machineB").
-    operation: Optional[str] = None, # The type of aggregation operation to filter (e.g., "sum", "avg", "max", or "min").
-    value: Optional[float] = None    # The specific value to filter the selected operation (e.g., sum = 100.0).
+    start_date: str,
+    end_date: str,
+    kpi_name: str,
+    column_name: str,
+    machines: list[str] = None,
+    operations: list[str] = None,
 ):
-    # Base SQL query with placeholders for parameterized queries
+    # SQL query template with parameterized placeholders
     base_query = """
-    SELECT asset_id, operation, time, sum, avg, min, max, name
+    SELECT asset_id, operation, time, %s
     FROM real_time_data
     WHERE kpi = %s
     """
+    # Initialize parameters list with kpi_name
+    params = [column_name,kpi_name]
 
-    # Initialize the parameters list, starting with the KPI name
-    params = [kpi_name]
-
-    # Add filters for machines if provided
+    # Dynamically add machine and operation filters if provided
     if machines:
-        machine_conditions = []  # Store individual machine filter conditions
-        for m in zip(machines.split(",")):  # Iterate over the comma-separated list of machines
-            machine_conditions.append("(name = %s)")  # Add a condition for each machine
-            params.extend([m])  # Add the machine name to the parameters list
-        machine_filter = " AND (" + " OR ".join(machine_conditions) + ")"  # Combine conditions with OR
+        machine_conditions = []
+        for m in zip(machines):
+            machine_conditions.append("name = %s")
+            params.extend(m)  # Add the machine and operation to params list
+        machine_filter = " AND (" + " OR ".join(machine_conditions) + ")"
         base_query += machine_filter
 
-    # Add operation and value filters if both are provided
-    if value is not None and operation is not None:
-        params.extend([value])  # Add the value to the parameters list
-        # Check the operation type and add the corresponding filter to the query
-        if operation == "sum":
-            base_query += " AND sum = %s"
-        elif operation == "avg":
-            base_query += " AND avg = %s"
-        elif operation == "max":
-            base_query += " AND max = %s"
-        elif operation == "min":
-            base_query += " AND min = %s"
+    if operations:
+        machine_conditions = []
+        for m in zip(operations):
+            machine_conditions.append("operation = %s")
+            params.extend(m)  # Add the machine and operation to params list
+        machine_filter = " AND (" + " OR ".join(machine_conditions) + ")"
+        base_query += machine_filter
 
-    # Add time range filtering
+
+    # Add time filtering
     base_query += " AND time >= %s AND time <= %s"
-    params.extend([start_date, end_date])  # Add the start and end dates to the parameters list
+    params.extend([start_date, end_date])
+    print(base_query)
+
+    # Output the final query
+    print("Final SQL Query:", base_query)
+    print("With parameters:", params)
 
     try:
         # Establish a connection to the database
         with psycopg2.connect(
-            host=DB_HOST,         # Database host address
-            database=DB_NAME,     # Name of the database
-            user=DB_USER,         # Username for the database
-            password=DB_PASSWORD  # Password for the database
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD
         ) as conn:
             with conn.cursor() as cursor:
-                # Execute the query with the parameters to prevent SQL injection
+                # Execute the query with parameters
                 cursor.execute(base_query, params)
-                results = cursor.fetchall()  # Fetch all results from the query
+                results = cursor.fetchall()
 
-                # Extract column names from the cursor description and map rows to dictionaries
+                # Convert results to a list of dictionaries
                 columns = [desc[0] for desc in cursor.description]
                 results_dict = [dict(zip(columns, row)) for row in results]
 
-                # Handle any NaN or Inf values in the results
+                # Handle NaN and Inf values in the results
                 results_dict = [
                     {col: handle_nan_inf(value) for col, value in row.items()}
                     for row in results_dict
                 ]
-
+        print(results_dict)
         return {"data": results_dict}   
 
     except Exception as e:
-        # Catch and handle any exceptions that occur during the database query
-        print(f"Error while executing the query: {e}")  # Log the error for debugging
-        return {"error": "An error occurred while executing the query"}  # Return an error response
-
-
+        # Handle any errors that occur during the process and return an error message in JSON format
+        print(f"Error while executing the query: {e}")
+        return {"error": "An error occurred while executing the query"}
     
 @app.get("/get_machines_base")
 def get_machines_base(asset_id: Optional[str]=None):
