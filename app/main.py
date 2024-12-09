@@ -39,7 +39,8 @@ class AnomalyDataRequest(BaseModel):
     avg: float
     min: float
     max: float
-    anomaly: str
+    status: str
+    var: float
 
 class UserRequest(BaseModel):
       email: str
@@ -353,18 +354,18 @@ async def post_data_point(data: AnomalyDataRequest):
             with conn.cursor() as cursor:
                 print("parameters")
                 print(data.time, data.isset_id, data.name, data.kpi, data.operation,
-                      data.sum, data.avg, data.min, data.max, data.anomaly)
+                      data.sum, data.avg, data.min, data.max, data.status, data.var)
 
                 query = """
                     INSERT INTO real_time_data (
-                        time, asset_id, name, kpi, operation, sum, avg, min, max, anomaly
+                        time, asset_id, name, kpi, operation, sum, avg, min, max, status, var
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     RETURNING id;
                 """
                 cursor.execute(query, (data.time, data.isset_id, data.name, data.kpi,
                                        data.operation, data.sum, data.avg, data.min,
-                                       data.max, data.anomaly))
+                                       data.max, data.status, data.var))
 
                 logs = cursor.fetchall()
         return {"data": logs}
