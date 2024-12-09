@@ -239,8 +239,6 @@
 		}
 }</pre>
 <hr style="border: 1px solid #000000; margin: 50px auto;">
-
-
 		
 		<h3><code>get_aggregated_kpi_base(time_start: Optional[datetime] = None, time_end: Optional[datetime] = None)</code></h3>
 		<p>
@@ -259,10 +257,85 @@
 		<p>The function returns the table in an array of dictionary, every dicitionary is a row of the original table.</table></p>
 
 		<h3>Examples</h3>
-		<pre>
->>> Quando funziona te lo faccio vede</pre>
+<pre>
+>>> get_aggregated_kpi_base("2024-12-01T08:00:00", "2024-12-08T12:00:00")
+
+[
+	{
+		"id": 1,
+		"name": "Performance KPI",
+		"aggregated_value": 95.5,
+		"begin_datetime": "2024-12-01T00:00:00",
+		"end_datetime": "2024-12-07T23:59:59",
+		"kpi_list": [
+			"KPI1",
+			"KPI2"
+		],
+		"operations": [
+			"operation123"
+		],
+		"machines": [
+			"machineA"
+		],
+		"step": 10
+	}
+]
+</pre>
 		
 		<hr style="border: 1px solid #000000; margin: 50px auto;">
+		<h3><code>insert_aggregated_kpi(data: AggregatedKPI)</code></h3>
+		<p>
+			<strong>Description:</strong> Inserts a new record into the `aggregated_kpi` table using the provided data.
+			The data includes KPI details, operational data, machine information, and a step value.
+		</p>
+
+		<p><strong>Parameters:</strong></p>
+		<ul>
+			<li><code>data</code> (required, <code>AggregatedKPI</code>): An object containing the following fields:
+				<ul>
+					<li><code>name</code> (str): The name of the KPI (e.g., "Performance KPI").</li>
+					<li><code>aggregated_value</code> (float): The aggregated value of the KPI.</li>
+					<li><code>begin_datetime</code> (str): The start of the KPI aggregation period in ISO format (e.g., "2024-12-01T00:00:00").</li>
+					<li><code>end_datetime</code> (str): The end of the KPI aggregation period in ISO format (e.g., "2024-12-07T23:59:59").</li>
+					<li><code>kpi_list</code> (list[str]): A list of KPIs associated with this record (e.g., ["KPI1", "KPI2"]).</li>
+					<li><code>operations</code> (list[str]): A list of operations associated with the KPI record (e.g., ["operation123"]).</li>
+					<li><code>machines</code> (list[str]): A list of machines associated with the KPI record (e.g., ["machineA"]).</li>
+					<li><code>step</code> (int): The step value for this record.</li>
+				</ul>
+			</li>
+		</ul>
+
+<p><strong>Returns:</strong></p>
+<p>A JSON object indicating whether the operation was successful:</p>
+<pre>
+{
+	"message": "Query inserted successfully"
+}
+</pre>
+<p>In case of an error, the response will contain an error message:</p>
+<pre>
+{
+	"message": "An error occurred",
+	"error": "Error details"
+}
+</pre>
+
+<h3>Examples</h3>
+<pre>
+>>> insert_aggregated_kpi({
+		"name": "Performance KPI",
+		"aggregated_value": 95.5,
+		"begin_datetime": "2024-12-01T00:00:00",
+		"end_datetime": "2024-12-07T23:59:59",
+		"kpi_list": ["KPI1", "KPI2"],
+		"operations": ["operation123"],
+		"machines": ["machineA"],
+		"step": 10
+	})
+</pre>
+
+		<hr style="border: 1px solid #000000; margin: 50px auto;">
+
 		
 		<h3><code>get_machines_base(asset_id: Optional[str]=None)</code></h3>
 		<p>

@@ -96,7 +96,7 @@ class AggregatedKPI(BaseModel):
     kpi_list: list[str]
     operations: list[str]
     machines: list[str]
-    step: str
+    step: int
 
 @app.get("/machines", summary="Fetch machine records",
          description="This endpoint retrieves all records from the machines table in the database, displaying details about each machine.")
@@ -698,7 +698,7 @@ def get_aggregated_kpi_base(time_start: Optional[datetime] = None, time_end: Opt
     conditions = []
     params = []
 
-    if start_time and end_time:
+    if time_start and time_end:
         conditions.append("begin_datetime >= %s AND end_datetime <= %s")
         params.append(time_start)
         params.append(time_end)
