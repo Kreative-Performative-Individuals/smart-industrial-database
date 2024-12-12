@@ -336,13 +336,13 @@ async def post_data_point(data: AnomalyDataRequest):
                 print(data.time, data.isset_id, data.name, data.kpi, data.operation,
                       data.sum, data.avg, data.min, data.max, data.status, data.var)
 
-                query = """
+                query = 
                     INSERT INTO real_time_data (
                         time, asset_id, name, kpi, operation, sum, avg, min, max, status, var
                     )
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     RETURNING id;
-                """
+                
                 cursor.execute(query, (data.time, data.isset_id, data.name, data.kpi,
                                        data.operation, data.sum, data.avg, data.min,
                                        data.max, data.status, data.var))
@@ -368,9 +368,9 @@ def filtered_get_historical_data(name: str, asset_id: str, kpi: str, operation: 
             with conn.cursor() as cursor:
                 print("Connessione al database riuscita.")
                 # AL POSTO DI real_time_data METTERE IL NOME DELLA TABELLA
-                query = """
+                query = 
                     SELECT * FROM real_time_data
-                """
+                
                 conditions = []
                 params = []
 
@@ -1119,7 +1119,7 @@ def get_energy(init_date, end_date):
             with conn.cursor() as cursor:
                 init_date = datetime.fromisoformat(init_date)
                 end_date = datetime.fromisoformat(end_date)
-                query = query = """
+                query = query = 
                 WITH aggregated_data AS (
                 SELECT
                     rtd.asset_id,
@@ -1167,7 +1167,7 @@ def get_energy(init_date, end_date):
                 aggregated_data ad
             ON
                 md.asset_id = ad.asset_id;
-                """
+            
                 params = {
                     'start_time': init_date,
                     'end_time': end_date
@@ -1204,7 +1204,7 @@ def single_energy_detail(machine_id, time_start, time_end):
                 password=DB_PASSWORD
         ) as conn:
             with conn.cursor() as cursor:
-                query = """
+                query =
                 WITH MachineSummary AS (
                     SELECT 
                         machine_id AS machineId,
@@ -1262,7 +1262,7 @@ def single_energy_detail(machine_id, time_start, time_end):
                         )
                     ) AS chart
                 FROM MachineSummary ms, MachineChart mc;
-                """
+    
                 
                 params = {
                     "machine_id": machine_id,
