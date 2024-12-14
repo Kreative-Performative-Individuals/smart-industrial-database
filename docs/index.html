@@ -567,6 +567,40 @@
 			}
 		]
 </pre>
+
+<hr style="border: 1px solid #000000; margin: 50px auto;">
+		
+<h3><code>def post_data_point(data: AnomalyDataRequest):</code></h3>
+<p>
+  <strong>Description:</strong> Insert in the database a new data point in the real_time_data table.
+</p>
+
+<p><strong>Parameters:</strong></p>
+<ul>
+	<li>AnomalyDataRequest: object defined in the main script which collect every info to be inserted in the real_time_data table:</li>
+	<code>time </code> datetime: The time of the created datapoint.
+    <code>asset_id:</code> str: The asset_id of the machine.
+    <code>name:</code> str: Name of the machine invlolved.
+    <code>kpi:</code> str: The kpi type.
+    <code>operation:</code> str: Type of operation performed.
+    <code>sum, avg, min, max:</code> float: The values of the kpi.
+    <code>status:</code> str: Notice if anomaly (yes(Anomaly) /no(Normal))
+</ul>
+
+<p><strong>Returns:</strong></p>
+The function returns a report of the operation results (logs of the insert query)</ul>
+
+<h3>Examples</h3>
+
+<pre>>>> post_data_point(data={"time": "2024-03-01T00:00:00", "asset_id": "ast-yhccl1zjue2t", "name": "metal_cutting", "kpi": "time", "sum": 0, "avg": 0, "min": 0, "max": 0, "operation": "working", "status": "Normal"})
+{
+"data": [
+	[
+	44737
+	]
+]
+}
+</pre>
     </main>
 </body>
 </html>
