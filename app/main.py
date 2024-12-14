@@ -98,8 +98,8 @@ class RealTimeData(BaseModel):
     end_date: str 
     kpi_name: str
     column_name: str
-    machines: list[str]
-    operations: list[str]
+    machines: str
+    operations: str
 
 #salva
 @app.get("/machines", summary="Fetch machine records",
@@ -721,7 +721,7 @@ def handle_nan_inf(value):
     return value
 
 
-@app.post("/get_real_time_data")
+@app.get("/get_real_time_data")
 def get_real_time_data(request:RealTimeData):
     # SQL query template with parameterized placeholders
     start_date = request.start_date
@@ -740,7 +740,7 @@ def get_real_time_data(request:RealTimeData):
 
     if machines and operations:
             machine_conditions = []
-            for m, o in zip(machines, operations):
+            for m, o in zip(machines.split(","), operations.split(",")):
                 machine_conditions.append("(name = %s AND operation = %s)")
                 params.extend([m, o])  # Add the machine and operation to params list
             machine_filter = " AND (" + " OR ".join(machine_conditions) + ")"
@@ -748,7 +748,7 @@ def get_real_time_data(request:RealTimeData):
 
     if machines and not operations:
         machine_conditions = []
-        for m in zip(machines):
+        for m in zip(machines.split(",")):
             machine_conditions.append("(name = %s)")
             params.extend(m)  # Add the machine and operation to params list
         machine_filter = " AND (" + " OR ".join(machine_conditions) + ")"
@@ -756,7 +756,7 @@ def get_real_time_data(request:RealTimeData):
 
     if operations and not machines:
         machine_conditions = []
-        for m in zip(operations):
+        for m in zip(operations.split(",")):
             machine_conditions.append("(operation = %s)")
             params.extend(m)  # Add the machine and operation to params list
         machine_filter = " AND (" + " OR ".join(machine_conditions) + ")"
