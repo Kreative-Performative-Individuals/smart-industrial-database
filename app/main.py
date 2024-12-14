@@ -756,19 +756,26 @@ def get_real_time_data(request:RealTimeData):
     # Initialize parameters list with kpi_name
     params = [column_name,kpi_name]
 
-    # Dynamically add machine and operation filters if provided
-    if machines:
+    if machines and operations:
+            machine_conditions = []
+            for m, o in zip(machines, operations):
+                machine_conditions.append("(name = %s AND operation = %s)")
+                params.extend([m, o])  # Add the machine and operation to params list
+            machine_filter = " AND (" + " OR ".join(machine_conditions) + ")"
+            base_query += machine_filter
+
+    if machines and not operations:
         machine_conditions = []
         for m in zip(machines):
-            machine_conditions.append("name = %s")
+            machine_conditions.append("(name = %s)")
             params.extend(m)  # Add the machine and operation to params list
         machine_filter = " AND (" + " OR ".join(machine_conditions) + ")"
         base_query += machine_filter
 
-    if operations:
+    if operations and not machines:
         machine_conditions = []
         for m in zip(operations):
-            machine_conditions.append("operation = %s")
+            machine_conditions.append("(operation = %s)")
             params.extend(m)  # Add the machine and operation to params list
         machine_filter = " AND (" + " OR ".join(machine_conditions) + ")"
         base_query += machine_filter
@@ -777,7 +784,6 @@ def get_real_time_data(request:RealTimeData):
     # Add time filtering
     base_query += " AND time >= %s AND time <= %s"
     params.extend([start_date, end_date])
-    print(base_query)
 
     # Output the final query
     print("Final SQL Query:", base_query)
@@ -795,18 +801,10 @@ def get_real_time_data(request:RealTimeData):
                 # Execute the query with parameters
                 cursor.execute(base_query, params)
                 results = cursor.fetchall()
-
-                # Convert results to a list of dictionaries
-                columns = [desc[0] for desc in cursor.description]
-                results_dict = [dict(zip(columns, row)) for row in results]
-
-                # Handle NaN and Inf values in the results
-                results_dict = [
-                    {col: handle_nan_inf(value) for col, value in row.items()}
-                    for row in results_dict
-                ]
-        print(results_dict)
-        return {"data": results_dict}   
+                return_val = []
+                for elem in results:
+                    return_val.append({"asset_id":elem[0],"operation":elem[1],"time":elem[2],column_name:elem[3]})
+        return {"data": return_val}   
 
     except Exception as e:
         # Handle any errors that occur during the process and return an error message in JSON format
