@@ -731,7 +731,7 @@ def get_real_time_data(request:RealTimeData):
     machines = request.machines
     operations = request.operations
     base_query = """
-    SELECT asset_id, operation, time, %s
+    SELECT asset_id, operation, time, min,max,sum,avg
     FROM real_time_data
     WHERE kpi = %s
     """
@@ -784,8 +784,20 @@ def get_real_time_data(request:RealTimeData):
                 cursor.execute(base_query, params)
                 results = cursor.fetchall()
                 return_val = []
+                index  = 0
+                match column_name:
+                    case "min":
+                        index = 3
+                    case "max":
+                        index = 4
+                    case "sum":
+                        index = 5
+                    case "avg":
+                        index = 6
+
                 for elem in results:
-                    return_val.append({"asset_id":elem[0],"operation":elem[1],"time":elem[2],column_name:elem[3]})
+                    return_val.append({"asset_id":elem[0],"operation":elem[1],"time":elem[2],column_name:elem[index]})
+
         return {"data": return_val}   
 
     except Exception as e:
