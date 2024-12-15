@@ -177,8 +177,8 @@ async def insert_query(statement: str, data: dict):
         return {"message": "An error occurred", "error": str(e)}
 
 
-"""@app.post("/insert_aggregated_kpi", summary="Insert aggregated KPI into the table")
-async def insert_query(data: AggregatedKPI):
+@app.post("/insert_aggregated_kpi", summary="Insert aggregated KPI into the table")
+async def insert_aggregated_kpi(data: AggregatedKPI):
     try:
         with psycopg2.connect(
                 host=DB_HOST,
@@ -203,7 +203,7 @@ async def insert_query(data: AggregatedKPI):
         # Log the error and return an error message
         print(f"An error occurred: {e}")
         return {"message": "An error occurred", "error": str(e)}
-"""
+
 
 """
 @app.get("/maintenance_records", summary="Fetch maintenance records",
@@ -275,14 +275,6 @@ async def fetch_production_logs():
         return {"message": "An error occurred", "error": str(e)}
 
 """
-# TODO, implement a query to return requested data to allow group 3 to do their calculations.
-# Please check the data format of the return. 
-# The query should filter based on the parameters: 
-#     machine_name, asset_id, kpi, operation, timestamp_start, timestamp_end
-# and should return the records with the same information, 
-# so a list of records like:
-#     machine_name, asset_id, kpi, operation, timestamp_start, timestamp_end
-# Test the endpoint before pushing so that we are sure that group 3 can use it.
 
 
 def safe_float(val):
@@ -354,68 +346,7 @@ async def post_data_point(data: AnomalyDataRequest):
         print(f"An error occurred: {e}")
         return {"message": "An error occurred", "error": str(e)}
 
-"""
-# FILTERED GET HISTORICAL DATA
-@app.get("/filtered_historical_data")
-def filtered_get_historical_data(name: str, asset_id: str, kpi: str, operation: str, timestamp_start: datetime, timestamp_end: datetime):
-    try:
-        with psycopg2.connect(
-            host=DB_HOST,
-            database=DB_NAME,
-            user=DB_USER,
-            password=DB_PASSWORD
-        ) as conn:
 
-            with conn.cursor() as cursor:
-                print("Connessione al database riuscita.")
-                # AL POSTO DI real_time_data METTERE IL NOME DELLA TABELLA
-                query = 
-                    SELECT * FROM real_time_data
-                
-                conditions = []
-                params = []
-
-                if name:
-                    conditions.append("name = %s")
-                    params.append(name)
-
-                if asset_id:
-                    conditions.append("asset_id = %s")
-                    params.append(asset_id)
-
-                if kpi:
-                    conditions.append("kpi = %s")
-                    params.append(kpi)
-
-                if timestamp_start:
-                    conditions.append("time >= %s")
-                    params.append(timestamp_start)
-
-                if timestamp_end:
-                    conditions.append("time <= %s")
-                    params.append(timestamp_end)
-
-                # Aggiungi la clausola WHERE se ci sono condizioni
-                if conditions:
-                    query += " WHERE " + " AND ".join(conditions)
-
-                # Aggiungi l'ordinamento
-                query += " ORDER BY time ASC;"
-
-                # Esegui la query
-                cursor.execute(query, params)
-                data = cursor.fetchall()
-
-                # Print the results of the query
-                print("\nPrint the results of the query':")
-                for row in data:
-                    print(row)
-
-    except Exception as e:
-        print(f"Errore: {e}")
-        return {"message": "An error occurred", "error": str(e)}
-
-"""
 #hash strings, such as password
 def hash_string(in_string: str) -> str:
     hashed_string = hashlib.sha256(in_string.encode('utf-8')).hexdigest()
@@ -1086,236 +1017,3 @@ def get_real_time_data_base(start_time: Optional[datetime] = None,
     except Exception as e:
         print(f"An error occurred: {e}")
         return {"message": "An error occurred", "error": str(e)}
-
-
-# API prototype for the energy dashboard
-
-"""
-// Machine Usage
-input: init_date, end_date
-// Energy
-
-const energy = {
-    totalPower: "",
-    totalConsumption: "",
-    totalCost: "",
-    energy Contributions: "", // Cosa vuol dire?
-    machines: [
-        {
-            machineId: "",
-            machineName: "",
-            machineStatus: "",
-            consumption: {
-                total: "",
-                working: "",
-                idle: ""
-            },
-
-            efficiency: {
-                energyEfficiencyRatio: "",  // Cosa vuol dire?
-                energyConsumptionPerUnit: ""  // Cosa vuol dire?
-            },
-
-            sustainability: { // Non ne teniamo conto
-                renewableEnergyUsagePercentage: "", // Cosa vuol dire?
-                carbonFootPrint: "" // Cosa vuol dire?
-            }
-        },
-    ]
-}
-
-"""
-
-"""
-@app.get("/energy")
-def get_energy(init_date, end_date):
-    try:
-        with psycopg2.connect(
-                host=DB_HOST,
-                database=DB_NAME,
-                user=DB_USER,
-                password=DB_PASSWORD
-        ) as conn:
-            with conn.cursor() as cursor:
-                init_date = datetime.fromisoformat(init_date)
-                end_date = datetime.fromisoformat(end_date)
-                query = query = 
-                WITH aggregated_data AS (
-                SELECT
-                    rtd.asset_id,
-                    SUM(CASE WHEN rtd.kpi = 'power' THEN rtd.sum ELSE 0 END) AS total_power,
-                    SUM(CASE WHEN rtd.kpi = 'consumption' THEN rtd.sum ELSE 0 END) AS total_consumption,
-                    SUM(CASE WHEN rtd.kpi = 'cost' THEN rtd.sum ELSE 0 END) AS total_cost,
-                    SUM(CASE WHEN rtd.operation = 'working' THEN rtd.sum ELSE 0 END) AS working_consumption,
-                    SUM(CASE WHEN rtd.operation = 'idle' THEN rtd.sum ELSE 0 END) AS idle_consumption
-                FROM
-                    real_time_data rtd
-                WHERE
-                    rtd.time BETWEEN %s AND %s
-                GROUP BY
-                    rtd.asset_id
-            ),
-            machine_details AS (
-                SELECT
-                    m.asset_id,
-                    m.name AS machine_name,
-                    m.status AS machine_status
-                FROM
-                    machines m
-                WHERE
-                    m.status = 'active'
-            )
-            SELECT
-                COALESCE(SUM(ad.total_power), 0) AS total_power,
-                COALESCE(SUM(ad.total_consumption), 0) AS total_consumption,
-                COALESCE(SUM(ad.total_cost), 0) AS total_cost,
-                JSON_AGG(
-                    JSON_BUILD_OBJECT(
-                        'machineId', md.asset_id,
-                        'machineName', md.machine_name,
-                        'machineStatus', md.machine_status,
-                        'consumption', JSON_BUILD_OBJECT(
-                            'total', COALESCE(ad.total_consumption, 0),
-                            'working', COALESCE(ad.working_consumption, 0),
-                            'idle', COALESCE(ad.idle_consumption, 0)
-                        )
-                    )
-                ) AS machines
-            FROM
-                machine_details md
-            LEFT JOIN
-                aggregated_data ad
-            ON
-                md.asset_id = ad.asset_id;
-            
-                params = {
-                    'start_time': init_date,
-                    'end_time': end_date
-                }
-
-                cursor.execute(query, params)
-
-                result = cursor.fetchone()
-                if result:
-                    energy = {
-                        "totalPower": result[0],
-                        "totalConsumption": result[1],
-                        "totalCost": result[2],
-                        "energyContributions": result[3],
-                        "machines": json.loads(result[4])  # Decodifica il JSON restituito
-                    }
-                    return energy
-                else:
-                    return {"message": "No data found for the given range."}
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        return {"error": str(e)}
-"""
-
-
-"""
-@app.get("/single_energy_detail")
-def single_energy_detail(machine_id, time_start, time_end):
-    try:
-        with psycopg2.connect(
-                host=DB_HOST,
-                database=DB_NAME,
-                user=DB_USER,
-                password=DB_PASSWORD
-        ) as conn:
-            with conn.cursor() as cursor:
-                query =
-                WITH MachineSummary AS (
-                    SELECT 
-                        machine_id AS machineId,
-                        machine_name AS machineName,
-                        machine_status AS machineStatus,
-                        %(time_start)s || ' to ' || %(time_end)s AS dataRange,
-                        SUM(power) AS totalPower,
-                        SUM(consumption) AS totalConsumption,
-                        SUM(cost) AS totalCost,
-                        SUM(renewable_energy) / NULLIF(SUM(consumption), 0) * 100 AS energyContributions,
-                        SUM(CASE WHEN machine_status = 'working' THEN consumption ELSE 0 END) AS workingConsumption,
-                        SUM(CASE WHEN machine_status = 'idle' THEN consumption ELSE 0 END) AS idleConsumption,
-                        AVG(energy_efficiency_ratio) AS energyEfficiencyRatio,
-                        AVG(energy_consumption_per_unit) AS energyConsumptionPerUnit,
-                        SUM(renewable_energy) / NULLIF(SUM(consumption), 0) * 100 AS renewableEnergyUsagePercentage,
-                        SUM(carbon_footprint) AS carbonFootprint
-                    FROM historical_data
-                    WHERE machine_id = %(machine_id)s
-                      AND timestamp BETWEEN %(time_start)s AND %(time_end)s
-                    GROUP BY machine_id, machine_name, machine_status
-                ),
-                MachineChart AS (
-                    SELECT 
-                        DATE(timestamp) AS date,
-                        SUM(consumption) AS totalConsumption,
-                        SUM(CASE WHEN machine_status = 'working' THEN consumption ELSE 0 END) AS workingConsumption,
-                        SUM(CASE WHEN machine_status = 'idle' THEN consumption ELSE 0 END) AS idleConsumption
-                    FROM historical_data
-                    WHERE machine_id = %(machine_id)s
-                      AND timestamp BETWEEN %(time_start)s AND %(time_end)s
-                    GROUP BY DATE(timestamp)
-                )
-                SELECT 
-                    ms.machineId,
-                    ms.machineName,
-                    ms.machineStatus,
-                    ms.dataRange,
-                    ms.totalPower,
-                    ms.totalConsumption,
-                    ms.totalCost,
-                    ms.energyContributions,
-                    ms.workingConsumption,
-                    ms.idleConsumption,
-                    ms.energyEfficiencyRatio,
-                    ms.energyConsumptionPerUnit,
-                    ms.renewableEnergyUsagePercentage,
-                    ms.carbonFootprint,
-                    'line' AS chartType,
-                    json_agg(
-                        json_build_object(
-                            'date', mc.date,
-                            'totalConsumption', mc.totalConsumption,
-                            'workingConsumption', mc.workingConsumption,
-                            'idleConsumption', mc.idleConsumption
-                        )
-                    ) AS chart
-                FROM MachineSummary ms, MachineChart mc;
-    
-                
-                params = {
-                    "machine_id": machine_id,
-                    "time_start": time_start,
-                    "time_end": time_end
-                }
-                
-                cursor.execute(query, params)
-                
-                result = cursor.fetchone()
-                if result:
-                    singleEnergy = {
-                        "machineId": result[0],
-                        "machineName": result[1],
-                        "machineStatus": result[2],
-                        "dataRange": result[3],
-                        "totalPower": result[4],
-                        "totalConsumption": result[5],
-                        "totalCost": result[6],
-                        "energyContributions": result[7],
-                        "workingConsumption": result[8],
-                        "idleConsumption": result[9],
-                        "energyEfficiencyRatio": result[10],
-                        "energyConsumptionPerUnit": result[11],
-                        "renewableEnergyUsagePercentage": result[12],
-                        "carbonFootprint": result[13],
-                        "chartType": result[14],
-                        "Chart": json.loads(result[15])  
-                    }
-                    return singleEnergy
-                else:
-                    return {"message": "No data found for the given range."}
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        return {"error": str(e)}
-"""     
