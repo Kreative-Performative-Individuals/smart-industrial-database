@@ -97,9 +97,10 @@ class RealTimeData(BaseModel):
     start_date: str
     end_date: str 
     kpi_name: str
-    column_name: str
+    asset_id: str
     machines: str
     operations: str
+    column_name: str
 
 #salva
 @app.get("/machines", summary="Fetch machine records",
@@ -320,8 +321,8 @@ async def get_historical_data():
     except Exception as e:
         print(f"An error occurred: {e}")
         return {"message": "An error occurred", "error": str(e)}
-    
-"""
+
+
 @app.post("/store_datapoint")
 async def post_data_point(data: AnomalyDataRequest):
     try:
@@ -336,13 +337,13 @@ async def post_data_point(data: AnomalyDataRequest):
                 print(data.time, data.isset_id, data.name, data.kpi, data.operation,
                       data.sum, data.avg, data.min, data.max, data.status, data.var)
 
-                query = 
+                query = """
                     INSERT INTO real_time_data (
                         time, asset_id, name, kpi, operation, sum, avg, min, max, status, var
                     )
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     RETURNING id;
-                
+                """
                 cursor.execute(query, (data.time, data.isset_id, data.name, data.kpi,
                                        data.operation, data.sum, data.avg, data.min,
                                        data.max, data.status, data.var))
@@ -352,7 +353,7 @@ async def post_data_point(data: AnomalyDataRequest):
     except Exception as e:
         print(f"An error occurred: {e}")
         return {"message": "An error occurred", "error": str(e)}
-"""
+
 """
 # FILTERED GET HISTORICAL DATA
 @app.get("/filtered_historical_data")
@@ -727,17 +728,18 @@ def get_real_time_data(request:RealTimeData):
     start_date = request.start_date
     end_date = request.end_date
     kpi_name = request.kpi_name
-    column_name = request.column_name
+    asset_id = request.asset_id
     machines = request.machines
     operations = request.operations
+    column_name = request.column_name
+
     base_query = """
-    SELECT asset_id, operation, time, min,max,sum,avg
+    SELECT asset_id, operation, time, min,max,sum,avg,name
     FROM real_time_data
     WHERE kpi = %s
     """
     # Initialize parameters list with kpi_name
     params = [kpi_name]
-
     if machines and operations:
             machine_conditions = []
             for m, o in zip(machines.split(","), operations.split(",")):
@@ -767,6 +769,11 @@ def get_real_time_data(request:RealTimeData):
     base_query += " AND time >= %s AND time <= %s"
     params.extend([start_date, end_date])
 
+    #Add asset_id filtering
+    if asset_id:
+        base_query += " AND asset_id = %s"
+        params.append(asset_id)
+
     # Output the final query
     print("Final SQL Query:", base_query)
     print("With parameters:", params)
@@ -785,18 +792,21 @@ def get_real_time_data(request:RealTimeData):
                 results = cursor.fetchall()
                 return_val = []
                 index  = 0
-                match column_name:
-                    case "min":
-                        index = 3
-                    case "max":
-                        index = 4
-                    case "sum":
-                        index = 5
-                    case "avg":
-                        index = 6
-
-                for elem in results:
-                    return_val.append({"asset_id":elem[0],"operation":elem[1],"time":elem[2],column_name:elem[index]})
+                if column_name:
+                    match column_name:
+                        case "min":
+                            index = 3
+                        case "max":
+                            index = 4
+                        case "sum":
+                            index = 5
+                        case "avg":
+                            index = 6
+                    for elem in results:
+                        return_val.append({"asset_id":elem[0],"operation":elem[1],"time":elem[2],column_name:elem[index]})
+                else:
+                    for elem in results:
+                        return_val.append({"asset_id":elem[0],"operation":elem[1],"time":elem[2],"min":elem[3],"max":elem[4],"sum":elem[5],"avg":elem[6],"name":elem[7]})
 
         return {"data": return_val}   
 
