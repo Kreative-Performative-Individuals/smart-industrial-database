@@ -321,8 +321,8 @@ async def get_historical_data():
     except Exception as e:
         print(f"An error occurred: {e}")
         return {"message": "An error occurred", "error": str(e)}
-    
-"""
+
+
 @app.post("/store_datapoint")
 async def post_data_point(data: AnomalyDataRequest):
     try:
@@ -337,13 +337,13 @@ async def post_data_point(data: AnomalyDataRequest):
                 print(data.time, data.isset_id, data.name, data.kpi, data.operation,
                       data.sum, data.avg, data.min, data.max, data.status, data.var)
 
-                query = 
+                query = """
                     INSERT INTO real_time_data (
                         time, asset_id, name, kpi, operation, sum, avg, min, max, status, var
                     )
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     RETURNING id;
-                
+                """
                 cursor.execute(query, (data.time, data.isset_id, data.name, data.kpi,
                                        data.operation, data.sum, data.avg, data.min,
                                        data.max, data.status, data.var))
@@ -353,7 +353,7 @@ async def post_data_point(data: AnomalyDataRequest):
     except Exception as e:
         print(f"An error occurred: {e}")
         return {"message": "An error occurred", "error": str(e)}
-"""
+
 """
 # FILTERED GET HISTORICAL DATA
 @app.get("/filtered_historical_data")
