@@ -2,7 +2,7 @@ import math
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import psycopg2
-from datetime import datetime
+from datetime import datetime, timedelta
 from pydantic import BaseModel
 import psycopg2
 import os
@@ -764,10 +764,21 @@ def get_real_time_data(request:RealTimeData):
         machine_filter = " AND (" + " OR ".join(machine_conditions) + ")"
         base_query += machine_filter
 
+    if not start_date and not end_date:
+        # Add time filtering
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=100)
 
-    # Add time filtering
-    base_query += " AND time >= %s AND time <= %s"
-    params.extend([start_date, end_date])
+        # Format dates as strings for SQL
+        end_date = end_date.strftime('%Y-%m-%d %H:%M:%S')
+        start_date = start_date.strftime('%Y-%m-%d %H:%M:%S')
+
+    if start_date:
+       base_query += " AND time >= %s"
+       params.append(start_date)
+    if end_date:
+       base_query += " AND time <= %s"
+       params.append(end_date)
 
     #Add asset_id filtering
     if asset_id:
