@@ -736,7 +736,7 @@ def get_real_time_data(request:RealTimeData):
     WHERE kpi = %s
     """
     # Initialize parameters list with kpi_name
-    params = [column_name,kpi_name]
+    params = [kpi_name]
 
     if machines and operations:
             machine_conditions = []
