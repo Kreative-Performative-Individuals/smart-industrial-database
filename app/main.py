@@ -31,7 +31,7 @@ app.add_middleware(
 
 class AnomalyDataRequest(BaseModel):
     time: datetime
-    isset_id: str
+    asset_id: str
     name: str
     kpi: str
     operation: str
@@ -326,7 +326,7 @@ async def post_data_point(data: AnomalyDataRequest):
         ) as conn:
             with conn.cursor() as cursor:
                 print("parameters")
-                print(data.time, data.isset_id, data.name, data.kpi, data.operation,
+                print(data.time, data.asset_id, data.name, data.kpi, data.operation,
                       data.sum, data.avg, data.min, data.max, data.status, data.var)
 
                 query = """
@@ -334,14 +334,12 @@ async def post_data_point(data: AnomalyDataRequest):
                         time, asset_id, name, kpi, operation, sum, avg, min, max, status, var
                     )
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    RETURNING id;
                 """
-                cursor.execute(query, (data.time, data.isset_id, data.name, data.kpi,
+                cursor.execute(query, (data.time, data.asset_id, data.name, data.kpi,
                                        data.operation, data.sum, data.avg, data.min,
                                        data.max, data.status, data.var))
 
-                logs = cursor.fetchall()
-        return {"data": logs}
+        return {"data": "Stored Data Point Correctly"}
     except Exception as e:
         print(f"An error occurred: {e}")
         return {"message": "An error occurred", "error": str(e)}
@@ -656,6 +654,7 @@ def handle_nan_inf(value):
 @app.get("/get_real_time_data")
 def get_real_time_data(request:RealTimeData):
     # SQL query template with parameterized placeholders
+    print(request)
     start_date = request.start_date
     end_date = request.end_date
     kpi_name = request.kpi_name
@@ -695,14 +694,13 @@ def get_real_time_data(request:RealTimeData):
         machine_filter = " AND (" + " OR ".join(machine_conditions) + ")"
         base_query += machine_filter
 
-    if not start_date and not end_date:
-        # Add time filtering
+    if not end_date:
         end_date = datetime.now()
-        start_date = end_date - timedelta(days=100)
 
-        # Format dates as strings for SQL
-        end_date = end_date.strftime('%Y-%m-%d %H:%M:%S')
-        start_date = start_date.strftime('%Y-%m-%d %H:%M:%S')
+    if not start_date:
+        # Add time filtering
+        end_date = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
+        start_date = end_date - timedelta(days=200)
 
     if start_date:
        base_query += " AND time >= %s"
