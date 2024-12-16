@@ -1028,3 +1028,110 @@ def get_real_time_data_base(start_time: Optional[datetime] = None,
     except Exception as e:
         print(f"An error occurred: {e}")
         return {"message": "An error occurred", "error": str(e)}
+
+
+
+'''
+// Production
+input: init_date, end_date
+const production = {
+    totalPower: "",
+    totalConsumption: "",
+    totalCost: "",
+    energyContributions: "",
+    machines: [
+        {
+            machineId: "",
+            machineName: "",
+            machineStatus: "",
+            averageCycleTime: "",
+            cycleCount: "",
+            badCycles: "",
+            goodCycles: "",
+            efficiency: "",
+            density: "",
+            failureRate: "",
+            successRate: "",
+        },
+    ]
+}'''
+
+
+@app.get("/production_dashboard")
+async def get_production_dashboard(init_date, end_date):
+    try:
+        with psycopg2.connect(
+                host=DB_HOST,
+                database=DB_NAME,
+                user=DB_USER,
+                password=DB_PASSWORD
+        ) as conn:
+            with conn.cursor() as cursor:
+                # Query to fetch production logs
+                query = """
+                    Select sum from real_time_data where time >= %s and time <= %s and kpi = %s 
+                """
+                cursor.execute(query, (init_date, end_date, "consumption"))
+
+                logs = cursor.fetchall()
+                consumption_sum = 0
+                for log in logs:
+                    consumption_sum += log[0]
+                
+                query = """
+                    Select avg from real_time_data where time >= %s and time <= %s and kpi = %s
+                """
+                cursor.execute(query, (init_date, end_date, "cost"))
+
+                logs = cursor.fetchall()
+                cost_sum = 0
+                for log in logs:
+                    cost_sum += log[0]
+
+                query = """
+                    Select avg from real_time_data where time >= %s and time <= %s and kpi = %s
+                """
+                cursor.execute(query,(init_date,end_date,"power"))
+
+                logs = cursor.fetchall()
+                total_power = 0
+                for log in logs:
+                    total_power += log[0]
+
+
+                query = """
+                        select * from real_time_data where time >= %s and time <= %s 
+                """
+                cursor.execute(query,(init_date,end_date))
+                logs = cursor.fetchall()
+                energy_Contribution = 0
+                running = 0
+                idle = 0
+                for log in logs:
+                    if log[-1] == "running":
+                        running+=1
+                    else:
+                        idle+=1
+                if (idle > 0 ) and (running > 0):
+                    energy_Contribution = (running/(idle+running)) * 100
+
+                query = """
+                    select m.*
+                    FROM public.machines as m inner join public.real_time_data as r on m.asset_id = r.asset_id where r.time >= %s and r.time <= %s
+                """
+                cursor.execute(query,(init_date,end_date))
+
+                total_machines = cursor.fetchall()
+            
+                consumption_sum = 0 if math.isnan(consumption_sum) else consumption_sum
+                cost_sum = 0 if math.isnan(cost_sum) else cost_sum
+                total_power = 0 if math.isnan(total_power) else total_power
+
+
+                returnValue = Production(totalConsumption=consumption_sum,totalCost=cost_sum,energyContributions=energy_Contribution,machines=total_machines,totalPower=total_power)
+                
+        return {"data":returnValue}
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return {"message": "An error occurred", "error": str(e)}
